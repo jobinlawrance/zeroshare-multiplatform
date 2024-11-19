@@ -26,5 +26,3 @@ fun initKoinIos(
 @Suppress("unused")
 fun Koin.loggerWithTag(tag: String) = get<Logger>(qualifier = null) { parametersOf(tag) }
 
-actual val platformModule: Module
-    get() = module {  }
