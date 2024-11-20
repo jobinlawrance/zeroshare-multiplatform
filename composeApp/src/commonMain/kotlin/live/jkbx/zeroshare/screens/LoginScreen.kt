@@ -12,10 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,17 +24,38 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import live.jkbx.zeroshare.connectToNetwork
+import live.jkbx.zeroshare.di.injectLogger
+import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.utils.openUrlInBrowser
+import live.jkbx.zeroshare.utils.getMachineName
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.core.component.KoinComponent
+import org.koin.java.KoinJavaComponent.inject
 import zeroshare.composeapp.generated.resources.Res
 import zeroshare.composeapp.generated.resources.neural
 import zeroshare.composeapp.generated.resources.search
 import zeroshare.composeapp.generated.resources.zerotier
+import java.util.UUID
 
-class LoginScreen : Screen {
+class LoginScreen : Screen, KoinComponent {
+
+    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    val backendApi by inject<BackendApi>(BackendApi::class.java)
+    val log by injectLogger("LoginScreen")
 
     @Composable
     override fun Content() {
+
+        val buttonEnabled = remember { mutableStateOf(true) }
+        val descriptionText = remember { mutableStateOf("") }
+        val descriptionVisible = remember { mutableStateOf(false) }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,12 +87,41 @@ class LoginScreen : Screen {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
-                    onClick = { /* TODO: Handle Google login */ }
+                    enabled = buttonEnabled.value,
+                    onClick = {
+                        val sessionToken = UUID.randomUUID().toString()
+                        val url = backendApi.creteNetworkURL(sessionToken)
+                        log.d { "URL: $url" }
+                        openUrlInBrowser(url)
+                        scope.launch {
+                            buttonEnabled.value = false
+                            backendApi.listenToLogin(sessionToken, {networkId ->
+                                descriptionVisible.value = true
+                                descriptionText.value = "Connecting to ZeroTier network $networkId ..."
+                                scope.launch {
+                                    val machineName = getMachineName()
+                                    val nodeId = connectToNetwork(networkId)
+                                    backendApi.setNodeId(nodeId, machineName, networkId)
+                                }
+                            })
+                        }
+                    }
                 ) {
                     Image(painterResource(Res.drawable.search), contentDescription = "Google Login")
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(text = "Login with Google")
                 }
+
+                if (descriptionVisible.value) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = descriptionText.value,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
             }
 
             Row(

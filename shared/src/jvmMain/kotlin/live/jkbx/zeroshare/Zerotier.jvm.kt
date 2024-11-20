@@ -12,7 +12,7 @@ actual suspend fun connectToNetwork(networkId: String): String {
     while (!node.isOnline) {
         ZeroTierNative.zts_util_delay(50);
     }
-    println("Node ID: " + node.id.toHexString());
+    println("Node ID: " + String.format("%010x", node.id));
     println("Joining network...");
     node.join(networkId.toLong(16))
     println("Waiting for network...")
@@ -23,5 +23,5 @@ actual suspend fun connectToNetwork(networkId: String): String {
     val addr4 = node.getIPv4Address(networkId.toLong(16))
     println("IPv4 address = " + addr4.hostAddress)
 
-    return addr4.hostAddress!!
+    return String.format("%010x", node.id)
 }

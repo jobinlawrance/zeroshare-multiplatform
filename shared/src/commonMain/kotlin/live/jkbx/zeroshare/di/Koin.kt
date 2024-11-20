@@ -17,6 +17,7 @@ import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
 const val tokenKey = "token"
+const val networkIdKey = "networkId"
 
 fun initKoin(appModule: Module): KoinApplication {
     val koinApplication = startKoin {
