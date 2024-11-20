@@ -53,6 +53,10 @@ kotlin {
         iosMain.dependencies {
             api(libs.touchlab.kermit.simple)
         }
+
+        jvmMain.dependencies {
+            implementation(files("../libs/libzt-1.8.10.jar"))
+        }
     }
 }
 
@@ -70,5 +74,6 @@ android {
     dependencies {
         implementation(libs.koin.android)
         implementation(libs.koin.androidx.compose)
+        implementation(files("../libs/libzt-release.aar"))
     }
 }

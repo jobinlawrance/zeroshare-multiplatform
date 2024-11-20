@@ -15,7 +15,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
         super.onCreate(savedInstanceState)
 
         setContent {
-            App()
+            App(log)
         }
     }
 }
@@ -23,5 +23,5 @@ class MainActivity : ComponentActivity(), KoinComponent {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+//    App(log)
 }
