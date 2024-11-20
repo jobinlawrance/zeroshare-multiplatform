@@ -5,7 +5,7 @@ import com.zerotier.sockets.ZeroTierNode
 import org.koin.java.KoinJavaComponent.inject
 
 @OptIn(ExperimentalStdlibApi::class)
-actual suspend fun connectToNetwork(networkId: String): String {
+actual suspend fun connectToNetwork(networkId: String, onNodeCreated: (String) -> Unit): String {
     val node = ZeroTierNode()
     node.initFromStorage("id_path")
     node.start()
@@ -15,6 +15,7 @@ actual suspend fun connectToNetwork(networkId: String): String {
     println("Node ID: " + String.format("%010x", node.id));
     println("Joining network...");
     node.join(networkId.toLong(16))
+    onNodeCreated(String.format("%010x", node.id))
     println("Waiting for network...")
     while (!node.isNetworkTransportReady(networkId.toLong(16))) {
         ZeroTierNative.zts_util_delay(50);

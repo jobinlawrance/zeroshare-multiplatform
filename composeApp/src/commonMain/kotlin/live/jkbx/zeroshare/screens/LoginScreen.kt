@@ -100,8 +100,12 @@ class LoginScreen : Screen, KoinComponent {
                                 descriptionText.value = "Connecting to ZeroTier network $networkId ..."
                                 scope.launch {
                                     val machineName = getMachineName()
-                                    val nodeId = connectToNetwork(networkId)
-                                    backendApi.setNodeId(nodeId, machineName, networkId)
+                                    connectToNetwork(networkId, { nodeId ->
+                                        scope.launch {
+                                            backendApi.setNodeId(nodeId, machineName, networkId)
+                                        }
+                                    })
+                                    // navigate
                                 }
                             })
                         }
