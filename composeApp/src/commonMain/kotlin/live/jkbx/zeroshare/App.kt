@@ -20,12 +20,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.navigator.Navigator
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.screens.LoginScreen
 import live.jkbx.zeroshare.ui.theme.darkScheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -37,56 +39,15 @@ import java.util.UUID
 
 @Composable
 @Preview
-fun App(log: Logger = Logger.withTag("JVM")) {
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-
-
+fun App() {
     MaterialTheme(
         colorScheme = darkScheme,
     ) {
-        var text by remember { mutableStateOf(TextFieldValue("")) }
-
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.social),
-                    contentDescription = "Icon",
-                    modifier = Modifier.size(64.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = text,
-                    singleLine = true,
-                    onValueChange = { text = it },
-                    label = { Text("Enter network ID here") },
-                    shape = RoundedCornerShape(32.dp),
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = {
-                        scope.launch {
-                            log.d { "value of text is ${text.text}" }
-                            connectToNetwork(text.text)
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("Connect")
-                }
-            }
+            Navigator(LoginScreen())
         }
     }
 }

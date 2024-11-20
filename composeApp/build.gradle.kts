@@ -39,6 +39,7 @@ kotlin {
             implementation(libs.koin.core)
             api(libs.multiplatformSettings.common)
             implementation(libs.ktor.client.cio)
+            implementation(libs.bundles.voyager.common)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
