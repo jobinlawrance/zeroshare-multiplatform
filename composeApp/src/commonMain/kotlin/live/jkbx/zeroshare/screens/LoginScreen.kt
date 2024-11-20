@@ -37,7 +37,8 @@ class LoginScreen : Screen {
     override fun Content() {
         Box(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(bottom = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(
