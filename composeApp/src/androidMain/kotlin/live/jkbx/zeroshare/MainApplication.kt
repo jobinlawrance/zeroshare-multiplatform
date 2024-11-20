@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.okhttp.OkHttp
 import live.jkbx.zeroshare.di.initKoin
 import org.koin.dsl.module
 
@@ -22,7 +24,9 @@ class MainApplication : Application() {
             single<Settings> {
                 SharedPreferencesSettings(get<SharedPreferences>())
             }
-
+            single<HttpClientEngine> {
+                OkHttp.create()
+            }
 
         })
     }

@@ -5,6 +5,8 @@ import co.touchlab.kermit.StaticConfig
 import co.touchlab.kermit.koin.KermitKoinLogger
 import co.touchlab.kermit.platformLogWriter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.Json
+import live.jkbx.zeroshare.network.BackendApi
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -13,6 +15,8 @@ import org.koin.core.module.Module
 import org.koin.core.parameter.parametersOf
 import org.koin.core.scope.Scope
 import org.koin.dsl.module
+
+const val tokenKey = "token"
 
 fun initKoin(appModule: Module): KoinApplication {
     val koinApplication = startKoin {
@@ -45,6 +49,13 @@ private val coreModule = module {
         Logger(config = StaticConfig(logWriterList = listOf(platformLogWriter())), "ZeroShare")
     factory { (tag: String?) -> if (tag != null) baseLogger.withTag(tag) else baseLogger }
 
+    single<Json> { Json {
+        isLenient = true
+        prettyPrint = true
+        ignoreUnknownKeys = true
+    } }
+
+    single { BackendApi(get(), get(), get()) }
 }
 
 internal inline fun <reified T> Scope.getWith(vararg params: Any?): T {

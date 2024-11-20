@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.androidLibrary)
 }
 
@@ -48,10 +49,15 @@ kotlin {
             implementation(libs.koin.composeVM)
             api(libs.touchlab.kermit)
             implementation(libs.touchlab.kermit.koin)
+            implementation(libs.bundles.ktor.common)
         }
 
         iosMain.dependencies {
             api(libs.touchlab.kermit.simple)
+        }
+
+        nativeMain.dependencies {
+            implementation(libs.ktor.client.ios)
         }
 
         jvmMain.dependencies {
@@ -74,6 +80,10 @@ android {
     dependencies {
         implementation(libs.koin.android)
         implementation(libs.koin.androidx.compose)
+        implementation(libs.ktor.client.okHttp)
+
+
         implementation(files("../libs/libzt-release.aar"))
+
     }
 }

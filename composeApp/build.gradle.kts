@@ -38,6 +38,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.koin.core)
             api(libs.multiplatformSettings.common)
+            implementation(libs.ktor.client.cio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -77,6 +78,7 @@ dependencies {
     debugImplementation(compose.uiTooling)
     implementation(libs.koin.android)
     implementation(libs.multiplatformSettings.common)
+    implementation(libs.ktor.client.okHttp)
 }
 
 compose.desktop {

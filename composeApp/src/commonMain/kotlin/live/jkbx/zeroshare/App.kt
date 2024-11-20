@@ -25,17 +25,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.ui.theme.darkScheme
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.java.KoinJavaComponent.inject
 
 import zeroshare.composeapp.generated.resources.Res
 import zeroshare.composeapp.generated.resources.social
+import java.util.UUID
 
 @Composable
 @Preview
 fun App(log: Logger = Logger.withTag("JVM")) {
     val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+
 
     MaterialTheme(
         colorScheme = darkScheme,
@@ -69,11 +74,10 @@ fun App(log: Logger = Logger.withTag("JVM")) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = {
-                         scope.launch {
-                            log.d { "value of text is ${text.text}"}
-                             connectToNetwork(text.text)
-
-                         }
+                        scope.launch {
+                            log.d { "value of text is ${text.text}" }
+                            connectToNetwork(text.text)
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
