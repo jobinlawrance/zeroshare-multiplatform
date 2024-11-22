@@ -3,8 +3,10 @@ package live.jkbx.zeroshare.utils
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import co.touchlab.kermit.Logger
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.koin.java.KoinJavaComponent.inject
@@ -35,8 +37,13 @@ actual fun loginWithGoogle(
     val zeroTierViewModel by inject<ZeroTierViewModel>(ZeroTierViewModel::class.java)
     val sessionToken = UUID.randomUUID().toString()
     val url = zeroTierViewModel.creteNetworkURL(sessionToken)
+    val settings by inject<Settings>(Settings::class.java)
+
     openUrlInBrowser(url)
     LaunchedEffect(Unit) {
-        zeroTierViewModel.listenToLogin(sessionToken, onLoginSuccess)
+        zeroTierViewModel.listenToLogin(sessionToken, { sseEvent ->
+            settings.putString(tokenKey, sseEvent.token)
+            onLoginSuccess(sseEvent)
+        })
     }
 }

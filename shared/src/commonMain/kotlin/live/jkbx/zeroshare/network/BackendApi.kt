@@ -22,6 +22,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.networkIdKey
@@ -82,18 +83,20 @@ class BackendApi: KoinComponent {
 
     suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit) {
 
-        client.sse("$baseUrl/sse/$token") {
-            while (true) {
-                incoming.collect { event ->
-                    log.d { "Event from server:" }
-                    val sseEvent = parseSseToken(event.data ?: "")
-                    settings.putString(tokenKey, sseEvent.token)
-                    settings.putString(networkIdKey, sseEvent.networkId)
-                    client.close()
-                    onReceived(sseEvent)
+        runCatching {
+            client.sse("$baseUrl/sse/$token") {
+                while (true) {
+                    incoming.collect { event ->
+                        log.d { "Event from server:" }
+                        val sseEvent = parseSseToken(event.data ?: "")
+                        settings.putString(tokenKey, sseEvent.token)
+                        settings.putString(networkIdKey, sseEvent.networkId)
+                        onReceived(sseEvent)
+                    }
                 }
             }
         }
+        client.close()
     }
 
     private fun parseSseToken(data: String): SSEEvent {
@@ -114,8 +117,9 @@ class BackendApi: KoinComponent {
         val req = client.postWithAuth("$baseUrl/login/verify-google", {
             setBody(mapOf("token" to token))
         })
-
-        return req.body<SSEEvent>()
+        val sseEvent =  req.body<SSEEvent>()
+        settings.putString(tokenKey, sseEvent.token)
+        return sseEvent
     }
 
     suspend fun HttpClient.postWithAuth(url: String, block: HttpRequestBuilder.() -> Unit = {}): HttpResponse {

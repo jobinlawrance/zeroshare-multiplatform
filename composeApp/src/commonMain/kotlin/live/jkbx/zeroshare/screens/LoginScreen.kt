@@ -26,7 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.connectToNetwork
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.injectLogger
@@ -54,10 +58,32 @@ class LoginScreen : Screen, KoinComponent {
         val descriptionText = remember { mutableStateOf("") }
         val descriptionVisible = remember { mutableStateOf(false) }
         val login = remember { mutableStateOf(false) }
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val isRendered = remember { mutableStateOf(false) }
 
         if (login.value) {
+
             loginWithGoogle(
-                onLoginSuccess = { sseEvent -> log.d { "$sseEvent" } },
+                onLoginSuccess = { sseEvent ->
+                    log.d { "$sseEvent" }
+                    descriptionVisible.value = true
+                    descriptionText.value = "Connecting to ZeroTier network - ${sseEvent.networkId} ..."
+                    scope.launch {
+                        connectToNetwork(sseEvent.networkId, { nodeId ->
+                            scope.launch {
+                                val result =
+                                    zeroTierViewModel.setNodeId(
+                                        nodeId,
+                                        getMachineName(),
+                                        sseEvent.networkId
+                                    )
+                                if (result) {
+                                    descriptionText.value = "Connected to ${sseEvent.networkId}"
+                                }
+                            }
+                        })
+                    }
+                },
                 onLoginError = { log.e(it) { "Error" } }
             )
         }

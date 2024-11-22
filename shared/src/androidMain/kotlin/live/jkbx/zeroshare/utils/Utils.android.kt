@@ -6,7 +6,9 @@ import android.net.Uri
 import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.russhwolf.settings.Settings
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
+import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.koin.core.component.inject
@@ -34,6 +36,7 @@ actual fun loginWithGoogle(
         try {
             val googleUser = uiProvider.signIn()
             val sseEvent = zeroTierViewModel.verifyGoogleToken(googleUser!!.idToken)
+
             onLoginSuccess(sseEvent)
         }  catch (e: Exception) {
             onLoginError(e)
