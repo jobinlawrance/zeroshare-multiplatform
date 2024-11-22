@@ -80,7 +80,7 @@ class BackendApi: KoinComponent {
         return "$baseUrl/login/$sessionToken"
     }
 
-    suspend fun listenToLogin(token: String, onReceived: (networkId: String) -> Unit) {
+    suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit) {
 
         client.sse("$baseUrl/sse/$token") {
             while (true) {
@@ -90,7 +90,7 @@ class BackendApi: KoinComponent {
                     settings.putString(tokenKey, sseEvent.token)
                     settings.putString(networkIdKey, sseEvent.networkId)
                     client.close()
-                    onReceived(sseEvent.networkId)
+                    onReceived(sseEvent)
                 }
             }
         }

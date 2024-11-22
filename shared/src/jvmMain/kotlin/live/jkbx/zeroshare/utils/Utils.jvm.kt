@@ -1,10 +1,17 @@
 package live.jkbx.zeroshare.utils
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import live.jkbx.zeroshare.models.SSEEvent
+import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
+import org.koin.java.KoinJavaComponent.inject
 import java.awt.Desktop
 import java.net.InetAddress
 import java.net.URI
+import java.util.UUID
 
 actual fun openUrlInBrowser(url: String) {
     Desktop.getDesktop().browse(URI(url))
@@ -17,5 +24,19 @@ actual suspend fun getMachineName(): String {
         }.hostName
     } catch (e: Exception) {
         throw IllegalStateException("Failed to get machine name", e)
+    }
+}
+
+@Composable
+actual fun loginWithGoogle(
+    onLoginSuccess: (SSEEvent) -> Unit,
+    onLoginError: (Throwable) -> Unit
+) {
+    val zeroTierViewModel by inject<ZeroTierViewModel>(ZeroTierViewModel::class.java)
+    val sessionToken = UUID.randomUUID().toString()
+    val url = zeroTierViewModel.creteNetworkURL(sessionToken)
+    openUrlInBrowser(url)
+    LaunchedEffect(Unit) {
+        zeroTierViewModel.listenToLogin(sessionToken, onLoginSuccess)
     }
 }

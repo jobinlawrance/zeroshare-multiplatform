@@ -31,6 +31,7 @@ import live.jkbx.zeroshare.connectToNetwork
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.utils.getMachineName
+import live.jkbx.zeroshare.utils.loginWithGoogle
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.koin.core.component.KoinComponent
@@ -49,12 +50,17 @@ class LoginScreen : Screen, KoinComponent {
 
     @Composable
     override fun Content() {
-        val scope = rememberCoroutineScope()
-        val googleAuthProvider: GoogleAuthProvider by inject()
-        val uiProvider = googleAuthProvider.getUiProvider()
         val buttonEnabled = remember { mutableStateOf(true) }
         val descriptionText = remember { mutableStateOf("") }
         val descriptionVisible = remember { mutableStateOf(false) }
+        val login = remember { mutableStateOf(false) }
+
+        if (login.value) {
+            loginWithGoogle(
+                onLoginSuccess = { sseEvent -> log.d { "$sseEvent" } },
+                onLoginError = { log.e(it) { "Error" } }
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -89,16 +95,8 @@ class LoginScreen : Screen, KoinComponent {
                 Button(
                     enabled = buttonEnabled.value,
                     onClick = {
-                        val sessionToken = UUID.randomUUID().toString()
-                        val url = zeroTierViewModel.creteNetworkURL(sessionToken)
-                        log.d { "URL: $url" }
-
-                        scope.launch {
-                            val googleUser = uiProvider.signIn()
-                            buttonEnabled.value = false
-                            val sseEvent = zeroTierViewModel.verifyGoogleToken(googleUser!!.idToken)
-                            log.d { "$sseEvent" }
-                        }
+                        buttonEnabled.value = false
+                        login.value = true
                     }
                 ) {
                     Image(painterResource(Res.drawable.search), contentDescription = "Google Login")

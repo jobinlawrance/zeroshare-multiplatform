@@ -11,7 +11,7 @@ class ZeroTierViewModel : ViewModel(), KoinComponent {
 
     fun creteNetworkURL(sessionToken: String) = backendApi.creteNetworkURL(sessionToken)
 
-    suspend fun listenToLogin(token: String, onReceived: (networkId: String) -> Unit) {
+    suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit) {
         backendApi.listenToLogin(token, onReceived)
     }
 
