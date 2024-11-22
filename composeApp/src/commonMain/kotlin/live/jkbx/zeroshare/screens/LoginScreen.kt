@@ -95,9 +95,9 @@ class LoginScreen : Screen, KoinComponent {
 
                         scope.launch {
                             val googleUser = uiProvider.signIn()
-                            log.d { "$googleUser" }
                             buttonEnabled.value = false
-//
+                            val sseEvent = zeroTierViewModel.verifyGoogleToken(googleUser!!.idToken)
+                            log.d { "$sseEvent" }
                         }
                     }
                 ) {

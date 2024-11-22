@@ -41,7 +41,7 @@ struct LoginScreen: View {
                 // Google Login Button
                 Button(action: {
                     // TODO: Handle Google login
-                    let backendApi = KotlinDependencies().getZeroTierViewModel()
+                    let zeroTierViewModel = KotlinDependencies().getZeroTierViewModel()
                     let keyWindow = UIApplication.shared.connectedScenes
                             .filter({$0.activationState == .foregroundActive})
                             .compactMap({$0 as? UIWindowScene})
@@ -53,17 +53,23 @@ struct LoginScreen: View {
                             return
                     }
                     GIDSignIn.sharedInstance.signIn(
-                        withPresenting: rootViewController) { gidSignInResult, error in
-                          guard let result = gidSignInResult else {
-                            // Inspect error
-                            print("Error signing in: \(String(describing: error))")
-                            return
-                          }
-                          // If sign in succeeded, display the app's main content View.
-                            let idToken = result.user.idToken?.tokenString
-                            let profile = result.user.profile
-                            NSLog(idToken!)
-                            NSLog("\(profile!)")
+                        withPresenting: rootViewController) { signInResult, error in
+                            guard error == nil else { return }
+                                guard let signInResult = signInResult else { return }
+
+                                signInResult.user.refreshTokensIfNeeded { user, error in
+                                    guard error == nil else { return }
+                                    guard let user = user else { return }
+
+                                    let idToken = user.idToken
+                                    // Send ID token to backend (example below).
+                                    
+                                    Task {
+                                        let result = try await zeroTierViewModel.verifyGoogleToken(token: idToken!.tokenString)
+                                        NSLog(result.networkId)
+                                    }
+                                }
+                            
                         }
                     
                 }) {

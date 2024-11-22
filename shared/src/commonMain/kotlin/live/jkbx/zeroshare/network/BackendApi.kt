@@ -2,6 +2,7 @@ package live.jkbx.zeroshare.network
 
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -36,6 +37,7 @@ class BackendApi: KoinComponent {
     private val log by injectLogger("BackendAPI")
     
     private val baseUrl = "https://zeroshare.jkbx.live"
+//    private val baseUrl = "http://localhost:4000"
 
     private val contentTypePlugin = createClientPlugin("Content-Type") {
         onRequest { request, _ ->
@@ -106,6 +108,14 @@ class BackendApi: KoinComponent {
         })
 
         return req.status == HttpStatusCode.OK
+    }
+
+    suspend fun verifyGoogleToken(token: String): SSEEvent {
+        val req = client.postWithAuth("$baseUrl/login/verify-google", {
+            setBody(mapOf("token" to token))
+        })
+
+        return req.body<SSEEvent>()
     }
 
     suspend fun HttpClient.postWithAuth(url: String, block: HttpRequestBuilder.() -> Unit = {}): HttpResponse {

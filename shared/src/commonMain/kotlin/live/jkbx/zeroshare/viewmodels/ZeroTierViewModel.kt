@@ -1,6 +1,7 @@
 package live.jkbx.zeroshare.viewmodels
 
 import live.jkbx.zeroshare.ViewModel
+import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.network.BackendApi
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -18,8 +19,8 @@ class ZeroTierViewModel : ViewModel(), KoinComponent {
         backendApi.setNodeId(nodeId, machineName, networkId)
 
 
-    suspend fun loginWithGoogle() {
-
+    suspend fun verifyGoogleToken(token: String): SSEEvent {
+        return backendApi.verifyGoogleToken(token)
     }
 
 }
