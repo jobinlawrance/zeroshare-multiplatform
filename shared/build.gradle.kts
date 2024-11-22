@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -5,9 +6,20 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.skie)
+    alias(libs.plugins.composeCompiler)
 }
 
+val serverId= gradleLocalProperties(rootDir, providers).getProperty("serverId","")
+
 kotlin {
+    // https://kotlinlang.org/docs/multiplatform-expect-actual.html#expected-and-actual-classes
+    // To suppress this warning about usage of expected and actual classes
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -50,6 +62,7 @@ kotlin {
             api(libs.touchlab.kermit)
             implementation(libs.touchlab.kermit.koin)
             implementation(libs.bundles.ktor.common)
+            implementation(libs.touchlab.skie.annotations)
         }
 
         iosMain.dependencies {
@@ -75,14 +88,26 @@ android {
     }
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+        resValue("string",
+            "serverId",
+            "\"" + serverId + "\"")
+    }
+
+    buildFeatures {
+        compose=true
     }
 
     dependencies {
         implementation(libs.koin.android)
         implementation(libs.koin.androidx.compose)
         implementation(libs.ktor.client.okHttp)
-
         implementation(files("../libs/libzt-release.aar"))
-
+        implementation(libs.androidx.credentials)
+        implementation(libs.androidx.credentials.play.services.auth)
+        implementation(libs.googleid)
     }
+
+}
+dependencies {
+    implementation(libs.googleid)
 }

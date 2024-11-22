@@ -8,6 +8,7 @@ import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import live.jkbx.zeroshare.di.initKoin
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 class MainApplication : Application() {
@@ -27,6 +28,7 @@ class MainApplication : Application() {
             single<HttpClientEngine> {
                 OkHttp.create()
             }
+            single<String>(named("serverId")) { getString(live.jkbx.zeroshare.shared.R.string.serverId) }
 
         })
     }

@@ -7,11 +7,7 @@ import android.os.Build
 import org.koin.java.KoinJavaComponent.inject
 
 actual fun openUrlInBrowser(url: String) {
-    val context by inject<Context>(Context::class.java)
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) // Required for application context
-    }
-    context.startActivity(intent)
+    TODO("Call it with activity context")
 }
 
 actual suspend fun getMachineName(): String {

@@ -7,8 +7,13 @@
 //
 
 import SwiftUI
+import Shared
+import GoogleSignIn
 
 struct LoginScreen: View {
+    
+    lazy var log = koin.loggerWithTag(tag: "LoginScreen")
+    
     var body: some View {
         ZStack {
             // Background Color
@@ -36,6 +41,31 @@ struct LoginScreen: View {
                 // Google Login Button
                 Button(action: {
                     // TODO: Handle Google login
+                    let backendApi = KotlinDependencies().getZeroTierViewModel()
+                    let keyWindow = UIApplication.shared.connectedScenes
+                            .filter({$0.activationState == .foregroundActive})
+                            .compactMap({$0 as? UIWindowScene})
+                            .first?.windows
+                            .filter({$0.isKeyWindow}).first
+
+                    guard let rootViewController = keyWindow!.rootViewController else {
+                        print("No root view controller")
+                            return
+                    }
+                    GIDSignIn.sharedInstance.signIn(
+                        withPresenting: rootViewController) { gidSignInResult, error in
+                          guard let result = gidSignInResult else {
+                            // Inspect error
+                            print("Error signing in: \(String(describing: error))")
+                            return
+                          }
+                          // If sign in succeeded, display the app's main content View.
+                            let idToken = result.user.idToken?.tokenString
+                            let profile = result.user.profile
+                            NSLog(idToken!)
+                            NSLog("\(profile!)")
+                        }
+                    
                 }) {
                     HStack {
                         Image("search") // Replace with your asset name

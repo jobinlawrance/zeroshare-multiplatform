@@ -6,13 +6,16 @@ import co.touchlab.kermit.koin.KermitKoinLogger
 import co.touchlab.kermit.platformLogWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
+import live.jkbx.zeroshare.models.GoogleAuthCredentials
 import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.qualifier
 import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
@@ -26,7 +29,8 @@ fun initKoin(appModule: Module): KoinApplication {
         )
         modules(
             appModule,
-            coreModule
+            coreModule,
+            platformModule
         )
     }
 
@@ -56,7 +60,9 @@ private val coreModule = module {
         ignoreUnknownKeys = true
     } }
 
-    single { BackendApi(get(), get(), get()) }
+    single { BackendApi() }
+    single { ZeroTierViewModel() }
+    factory { GoogleAuthCredentials(get(qualifier("serverId"))) }
 }
 
 internal inline fun <reified T> Scope.getWith(vararg params: Any?): T {
@@ -66,3 +72,4 @@ internal inline fun <reified T> Scope.getWith(vararg params: Any?): T {
 // Simple function to clean up the syntax a bit
 fun KoinComponent.injectLogger(tag: String): Lazy<Logger> = inject { parametersOf(tag) }
 
+expect val platformModule: Module

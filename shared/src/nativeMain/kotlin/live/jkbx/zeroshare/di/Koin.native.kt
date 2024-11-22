@@ -6,8 +6,11 @@ import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.Settings
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
+import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.koin.core.Koin
 import org.koin.core.KoinApplication
+import org.koin.core.component.KoinComponent
 import org.koin.core.module.Module
 import org.koin.core.module.single
 import org.koin.core.parameter.parametersOf
@@ -29,3 +32,11 @@ fun initKoinIos(
 @Suppress("unused")
 fun Koin.loggerWithTag(tag: String) = get<Logger>(qualifier = null) { parametersOf(tag) }
 
+@Suppress("unused") // Called from Swift
+object KotlinDependencies : KoinComponent {
+    fun getZeroTierViewModel() = getKoin().get<ZeroTierViewModel>()
+}
+
+actual val platformModule: Module = module {
+
+}

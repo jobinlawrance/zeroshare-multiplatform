@@ -27,9 +27,15 @@ import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class BackendApi(private val settings: Settings, engine: HttpClientEngine, private val kJson: Json): KoinComponent {
-    val log by injectLogger("BackendAPI")
+class BackendApi: KoinComponent {
+    private val settings: Settings by inject<Settings>()
+    private val engine: HttpClientEngine by inject<HttpClientEngine>()
+    private val kJson: Json by inject<Json>()
+    private val log by injectLogger("BackendAPI")
+    
+    private val baseUrl = "https://zeroshare.jkbx.live"
 
     private val contentTypePlugin = createClientPlugin("Content-Type") {
         onRequest { request, _ ->
@@ -68,15 +74,13 @@ class BackendApi(private val settings: Settings, engine: HttpClientEngine, priva
         install(contentTypePlugin)
     }
 
-
-
     fun creteNetworkURL(sessionToken: String): String {
-        return "http://localhost:4000/login/$sessionToken"
+        return "$baseUrl/login/$sessionToken"
     }
 
     suspend fun listenToLogin(token: String, onReceived: (networkId: String) -> Unit) {
 
-        client.sse("http://localhost:4000/sse/$token") {
+        client.sse("$baseUrl/sse/$token") {
             while (true) {
                 incoming.collect { event ->
                     log.d { "Event from server:" }
@@ -97,7 +101,7 @@ class BackendApi(private val settings: Settings, engine: HttpClientEngine, priva
 
     suspend fun setNodeId(nodeId: String, machineName: String, networkId: String): Boolean {
 
-        val req = client.postWithAuth("http://localhost:4000/node", {
+        val req = client.postWithAuth("$baseUrl/node", {
             setBody(mapOf("node_id" to nodeId, "machine_name" to machineName, "network_id" to networkId))
         })
 
