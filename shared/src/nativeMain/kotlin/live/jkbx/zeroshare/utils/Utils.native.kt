@@ -5,6 +5,7 @@ import live.jkbx.zeroshare.models.SSEEvent
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
+import kotlin.experimental.ExperimentalNativeApi
 
 
 actual fun openUrlInBrowser(url: String) {
@@ -30,3 +31,9 @@ actual fun loginWithGoogle(
 ) {
     TODO("Not yet implemented")
 }
+
+class IOSPlatform: Platform {
+    override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
+}
+
+actual fun getPlatform(): Platform = IOSPlatform()

@@ -16,6 +16,9 @@ struct LoginScreen: View {
     lazy var log = koin.loggerWithTag(tag: "LoginScreen")
     @State var descriptionText = ""
     @State var isDescriptionVisible = false
+    @State var buttonDisabled = false
+    @EnvironmentObject private var navigationManager: NavigationStateManager
+
     
     var body: some View {
         ZStack {
@@ -43,7 +46,7 @@ struct LoginScreen: View {
                 
                 // Google Login Button
                 Button(action: {
-                    // TODO: Handle Google login
+                    buttonDisabled = true
                     let zeroTierViewModel = KotlinDependencies().getZeroTierViewModel()
                     let keyWindow = UIApplication.shared.connectedScenes
                             .filter({$0.activationState == .foregroundActive})
@@ -73,8 +76,11 @@ struct LoginScreen: View {
                                         descriptionText = "Conntecting to ZeroTier network - \(result.networkId)"
                                         try await connectToZTNetwork(result.networkId, onNodeCreated: { nodeId in
                                             Task {
-                                                try await zeroTierViewModel.setNodeId(nodeId: nodeId, machineName: getMachineName(), networkId: result.networkId)
+                                                try await zeroTierViewModel.setNodeId(nodeId: nodeId, machineName: getMachineName(), networkId: result.networkId,platformName: getPlatform().name)
                                                 descriptionText = "Connected to \(result.networkId)"
+                                                withAnimation {
+                                                            navigationManager.currentPath = .main
+                                                }
                                             }
                                         })
                                     }
@@ -96,6 +102,7 @@ struct LoginScreen: View {
                     .padding()
                     .background(Color(hex: "#FFFFB4AC"))
                     .cornerRadius(8)
+                    .disabled(buttonDisabled)
                 }
                 
                 Spacer().frame(height: 16)

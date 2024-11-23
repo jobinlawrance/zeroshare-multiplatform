@@ -27,16 +27,17 @@ import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.di.tokenKey
+import live.jkbx.zeroshare.models.Member
 import live.jkbx.zeroshare.models.SSEEvent
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-class BackendApi: KoinComponent {
+class BackendApi : KoinComponent {
     private val settings: Settings by inject<Settings>()
     private val engine: HttpClientEngine by inject<HttpClientEngine>()
     private val kJson: Json by inject<Json>()
     private val log by injectLogger("BackendAPI")
-    
+
     private val baseUrl = "https://zeroshare.jkbx.live"
 //    private val baseUrl = "http://localhost:4000"
 
@@ -104,10 +105,22 @@ class BackendApi: KoinComponent {
         return event
     }
 
-    suspend fun setNodeId(nodeId: String, machineName: String, networkId: String): Boolean {
+    suspend fun setNodeId(
+        nodeId: String,
+        machineName: String,
+        networkId: String,
+        platformName: String
+    ): Boolean {
 
         val req = client.postWithAuth("$baseUrl/node", {
-            setBody(mapOf("node_id" to nodeId, "machine_name" to machineName, "network_id" to networkId))
+            setBody(
+                mapOf(
+                    "node_id" to nodeId,
+                    "machine_name" to machineName,
+                    "network_id" to networkId,
+                    "platform" to platformName
+                )
+            )
         })
 
         return req.status == HttpStatusCode.OK
@@ -117,19 +130,31 @@ class BackendApi: KoinComponent {
         val req = client.postWithAuth("$baseUrl/login/verify-google", {
             setBody(mapOf("token" to token))
         })
-        val sseEvent =  req.body<SSEEvent>()
+        val sseEvent = req.body<SSEEvent>()
         settings.putString(tokenKey, sseEvent.token)
+        settings.putString(networkIdKey, sseEvent.networkId)
         return sseEvent
     }
 
-    suspend fun HttpClient.postWithAuth(url: String, block: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
+    suspend fun getZTPeers(networkId: String = settings.getString(networkIdKey, "")): List<Member> {
+        val req = client.getWithAuth("$baseUrl/peers?networkId=$networkId")
+        return req.body<List<Member>>()
+    }
+
+    suspend fun HttpClient.postWithAuth(
+        url: String,
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): HttpResponse {
         return post(url, {
             block()
             header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
         })
     }
 
-    suspend fun HttpClient.getWithAuth(url: String, block: HttpRequestBuilder.() -> Unit = {}): HttpResponse {
+    suspend fun HttpClient.getWithAuth(
+        url: String,
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): HttpResponse {
         return get(url, {
             block()
             header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")

@@ -1,17 +1,41 @@
 import SwiftUI
 import GoogleSignIn
 
+enum NavigationPath {
+    case login
+    case main
+}
+
+// Create a navigation state manager
+class NavigationStateManager: ObservableObject {
+    @Published var currentPath: NavigationPath = .login
+}
+
+// Modified App struct
 @main
 struct iOSApp: App {
+    @StateObject private var navigationManager = NavigationStateManager()
+    
     init() {
         startKoin()
     }
+    
     var body: some Scene {
         WindowGroup {
-            LoginScreen()
-                .onOpenURL { url in
-                    GIDSignIn.sharedInstance.handle(url)
+            NavigationStack {
+                Group {
+                    switch navigationManager.currentPath {
+                    case .login:
+                        LoginScreen()
+                            .onOpenURL { url in
+                                GIDSignIn.sharedInstance.handle(url)
+                            }
+                    case .main:
+                        PeerScreen()
+                    }
                 }
+            }
+            .environmentObject(navigationManager)
         }
     }
 }

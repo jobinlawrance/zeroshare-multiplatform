@@ -10,3 +10,9 @@ expect suspend fun getMachineName(): String
 @Composable
 expect fun loginWithGoogle(onLoginSuccess: (SSEEvent) -> Unit,
                            onLoginError: (Throwable) -> Unit)
+
+interface Platform {
+    val name: String
+}
+
+expect fun getPlatform(): Platform

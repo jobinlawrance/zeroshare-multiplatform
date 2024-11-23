@@ -15,12 +15,22 @@ class ZeroTierViewModel : ViewModel(), KoinComponent {
         backendApi.listenToLogin(token, onReceived)
     }
 
-    suspend fun setNodeId(nodeId: String, machineName: String, networkId: String) =
-        backendApi.setNodeId(nodeId, machineName, networkId)
+    suspend fun setNodeId(
+        nodeId: String,
+        machineName: String,
+        networkId: String,
+        platformName: String
+    ) = backendApi.setNodeId(nodeId, machineName, networkId, platformName)
 
 
     suspend fun verifyGoogleToken(token: String): SSEEvent {
         return backendApi.verifyGoogleToken(token)
     }
+
+    suspend fun getZTPeers(networkId: String? = null) = if (networkId == null)
+        backendApi.getZTPeers()
+    else
+        backendApi.getZTPeers(networkId)
+
 
 }

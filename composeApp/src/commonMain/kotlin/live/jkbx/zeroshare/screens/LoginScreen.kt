@@ -24,7 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +38,7 @@ import live.jkbx.zeroshare.connectToNetwork
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.utils.getMachineName
+import live.jkbx.zeroshare.utils.getPlatform
 import live.jkbx.zeroshare.utils.loginWithGoogle
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.jetbrains.compose.resources.painterResource
@@ -52,6 +56,7 @@ class LoginScreen : Screen, KoinComponent {
     private val zeroTierViewModel: ZeroTierViewModel by inject()
     private val log: Logger by injectLogger("LoginScreen")
 
+    @OptIn(InternalVoyagerApi::class)
     @Composable
     override fun Content() {
         val buttonEnabled = remember { mutableStateOf(true) }
@@ -60,6 +65,8 @@ class LoginScreen : Screen, KoinComponent {
         val login = remember { mutableStateOf(false) }
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val isRendered = remember { mutableStateOf(false) }
+        val navigator = LocalNavigator.currentOrThrow
+
 
         if (login.value) {
 
@@ -75,10 +82,14 @@ class LoginScreen : Screen, KoinComponent {
                                     zeroTierViewModel.setNodeId(
                                         nodeId,
                                         getMachineName(),
-                                        sseEvent.networkId
+                                        sseEvent.networkId,
+                                        getPlatform().name
                                     )
                                 if (result) {
                                     descriptionText.value = "Connected to ${sseEvent.networkId}"
+                                    withContext(Dispatchers.Main) {
+                                        navigator.replace(PeerScreen())
+                                    }
                                 }
                             }
                         })
