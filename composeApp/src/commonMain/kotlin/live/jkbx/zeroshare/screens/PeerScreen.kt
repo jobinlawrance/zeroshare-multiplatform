@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import com.russhwolf.settings.Settings
+import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerType
+import io.github.vinceglb.filekit.core.PlatformDirectory
+import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,7 +59,6 @@ import java.util.Date
 import java.util.Locale
 import live.jkbx.zeroshare.ZeroTierPeer
 import live.jkbx.zeroshare.di.nodeIdKey
-import live.jkbx.zeroshare.network.KtorPier
 import live.jkbx.zeroshare.utils.getPlatform
 
 class PeerScreen : Screen, KoinComponent {
@@ -68,9 +72,23 @@ class PeerScreen : Screen, KoinComponent {
         var members by remember { mutableStateOf<List<Member>?>(null) }
         val job = SupervisorJob()
         val scope = CoroutineScope(job + Dispatchers.IO)
+        val directory: PlatformDirectory? by remember { mutableStateOf(null) }
+        var files: Set<PlatformFile> by remember { mutableStateOf(emptySet()) }
+        var remoteAddress = ""
+
+        val singleFilePicker = rememberFilePickerLauncher(
+            type = PickerType.ImageAndVideo,
+            title = "Single file picker",
+            initialDirectory = directory?.path,
+            onResult = { file ->
+                scope.launch {
+                    zeroTierPeer.sendFile(remoteAddress, 9999, file!!)
+                }
+            },
+            platformSettings = null
+        )
 
         DisposableEffect(Unit) {
-
 
             scope.launch {
                 // Perform your API request
@@ -93,7 +111,7 @@ class PeerScreen : Screen, KoinComponent {
 
             Box(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
                 when (val data = members) {
@@ -107,13 +125,28 @@ class PeerScreen : Screen, KoinComponent {
                         MemberList(
                             nodes = data,
                             myNodeId = settings.getString(networkIdKey, ""),
-                            onClick = {ipAddress ->
+                            onClick = { ipAddress ->
                                 scope.launch {
-                                    zeroTierPeer.sendMessage(ipAddress, 9999, "Hello from ${getPlatform().name}")
+                                    remoteAddress = ipAddress
+                                    zeroTierPeer.sendMessage(
+                                        ipAddress,
+                                        9999,
+                                        "Hello from ${getPlatform().name}"
+                                    )
                                 }
                             })
                     }
                 }
+            }
+
+            Button(
+                onClick = {
+                    singleFilePicker.launch()
+                },
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+                    .padding(16.dp)
+            ) {
+                Text("Pick a file")
             }
         }
 
@@ -125,7 +158,7 @@ fun MemberList(nodes: List<Member>, myNodeId: String, onClick: (ipAddress: Strin
     LazyColumn(
         modifier = Modifier
             .padding(horizontal = 8.dp)
-            .fillMaxSize(),
+            .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(nodes.size) { index ->

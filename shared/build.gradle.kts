@@ -41,8 +41,6 @@ kotlin {
     
     jvm()
 
-
-    
     sourceSets {
 
         all {
@@ -64,6 +62,9 @@ kotlin {
             implementation(libs.bundles.ktor.common)
             implementation(libs.touchlab.skie.annotations)
             api(libs.kmpnotifier)
+            api("io.github.vinceglb:filekit-core:0.8.7")
+            api("io.github.vinceglb:filekit-compose:0.8.7")
+
         }
 
         iosMain.dependencies {
@@ -79,6 +80,8 @@ kotlin {
         }
     }
 }
+
+
 
 android {
     namespace = "live.jkbx.zeroshare.shared"
