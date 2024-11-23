@@ -63,6 +63,7 @@ kotlin {
             implementation(libs.touchlab.kermit.koin)
             implementation(libs.bundles.ktor.common)
             implementation(libs.touchlab.skie.annotations)
+            api(libs.kmpnotifier)
         }
 
         iosMain.dependencies {

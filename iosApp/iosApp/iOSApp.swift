@@ -1,5 +1,6 @@
 import SwiftUI
 import GoogleSignIn
+import Shared
 
 enum NavigationPath {
     case login
@@ -15,6 +16,7 @@ class NavigationStateManager: ObservableObject {
 @main
 struct iOSApp: App {
     @StateObject private var navigationManager = NavigationStateManager()
+
     
     init() {
         startKoin()

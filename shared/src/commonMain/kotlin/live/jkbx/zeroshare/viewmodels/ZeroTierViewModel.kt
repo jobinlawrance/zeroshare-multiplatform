@@ -1,5 +1,16 @@
 package live.jkbx.zeroshare.viewmodels
 
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.InetSocketAddress
+import io.ktor.network.sockets.aSocket
+import io.ktor.network.sockets.openReadChannel
+import io.ktor.network.sockets.openWriteChannel
+import io.ktor.utils.io.readUTF8Line
+import io.ktor.utils.io.writeStringUtf8
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import live.jkbx.zeroshare.ViewModel
 import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.network.BackendApi
@@ -33,4 +44,28 @@ class ZeroTierViewModel : ViewModel(), KoinComponent {
         backendApi.getZTPeers(networkId)
 
 
+    fun startServer(port: Int) = runBlocking {
+        val selectorManager = SelectorManager(Dispatchers.IO)
+        val serverSocket = aSocket(selectorManager).tcp().bind(InetSocketAddress("0.0.0.0", port))
+
+        println("Starting server on port $port...")
+
+        try {
+            while (true) {
+                val socket = serverSocket.accept()
+                println("Accepted connection from ${socket.remoteAddress}")
+
+                launch {
+                    val receiveChannel = socket.openReadChannel()
+                    val message = receiveChannel.readUTF8Line()
+                    println("Received: $message")
+
+                    socket.close()
+                }
+            }
+        } catch (e: Exception) {
+            println("Error: ${e.message}")
+            serverSocket.close()
+        }
+    }
 }

@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.mmk.kmpnotifier.permission.permissionUtil
 import org.koin.core.component.KoinComponent
 
 class MainActivity : ComponentActivity(), KoinComponent {
@@ -15,6 +16,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
         setContent {
             App()
         }
+        val permissionUtil by permissionUtil()
+        permissionUtil.askNotificationPermission()
     }
 }
 

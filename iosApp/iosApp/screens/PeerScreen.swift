@@ -20,6 +20,7 @@ struct PeerScreen: View {
     @State private var members: [Member]? = nil
     @State private var isLoading = true
     
+    let zeroTierPeer = ZeroPeerImpl(port: 9999)
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -40,6 +41,10 @@ struct PeerScreen: View {
                     LazyVStack(spacing: 8) {
                         ForEach(members) { member in
                             MemberItemView(member: member, isHighlighted: false)
+                                .onTapGesture {
+                                    NSLog("Sending message")
+                                    zeroTierPeer.sendMessage("Hello from \(getPlatform().name)", to: member.ipAssignments.first!, port: 9999)
+                                }
                         }
                     }
                     .padding(.horizontal)
@@ -62,10 +67,10 @@ struct PeerScreen: View {
                     return Member(id: $0.id, name: $0.name, creationTime: timeInterval, ipAssignments: $0.ipAssignments, platform: $0.platform)
                 }
                 isLoading = false
+                zeroTierPeer.startServer()
             }
         }
     }
-    
     
     
     struct MemberItemView: View {

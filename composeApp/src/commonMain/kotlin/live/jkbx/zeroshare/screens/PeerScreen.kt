@@ -37,6 +37,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.models.Member
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
@@ -51,24 +52,31 @@ import zeroshare.composeapp.generated.resources.laptop
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import live.jkbx.zeroshare.ZeroTierPeer
+import live.jkbx.zeroshare.di.nodeIdKey
+import live.jkbx.zeroshare.network.KtorPier
+import live.jkbx.zeroshare.utils.getPlatform
 
 class PeerScreen : Screen, KoinComponent {
 
     val settings by inject<Settings>()
     val zeroTierViewModel by inject<ZeroTierViewModel>()
+    val zeroTierPeer by inject<ZeroTierPeer>()
 
     @Composable
     override fun Content() {
         var members by remember { mutableStateOf<List<Member>?>(null) }
+        val job = SupervisorJob()
+        val scope = CoroutineScope(job + Dispatchers.IO)
 
         DisposableEffect(Unit) {
-            val job = SupervisorJob()
-            val scope = CoroutineScope(job + Dispatchers.IO)
+
 
             scope.launch {
                 // Perform your API request
                 members = null // Reset to show loading
                 members = zeroTierViewModel.getZTPeers()
+                zeroTierPeer.startServer(9999)
             }
 
             onDispose {
@@ -77,7 +85,11 @@ class PeerScreen : Screen, KoinComponent {
         }
 
         Column {
-            Text(text = "Peers", style = MaterialTheme.typography.displayLarge, modifier = Modifier.padding(16.dp))
+            Text(
+                text = "Peers",
+                style = MaterialTheme.typography.displayLarge,
+                modifier = Modifier.padding(16.dp)
+            )
 
             Box(
                 modifier = Modifier
@@ -92,7 +104,14 @@ class PeerScreen : Screen, KoinComponent {
 
                     else -> {
                         // Show node list
-                        MemberList(nodes = data, myNodeId = settings.getString(networkIdKey, ""))
+                        MemberList(
+                            nodes = data,
+                            myNodeId = settings.getString(networkIdKey, ""),
+                            onClick = {ipAddress ->
+                                scope.launch {
+                                    zeroTierPeer.sendMessage(ipAddress, 9999, "Hello from ${getPlatform().name}")
+                                }
+                            })
                     }
                 }
             }
@@ -102,7 +121,7 @@ class PeerScreen : Screen, KoinComponent {
 }
 
 @Composable
-fun MemberList(nodes: List<Member>, myNodeId: String) {
+fun MemberList(nodes: List<Member>, myNodeId: String, onClick: (ipAddress: String) -> Unit) {
     LazyColumn(
         modifier = Modifier
             .padding(horizontal = 8.dp)
@@ -110,13 +129,13 @@ fun MemberList(nodes: List<Member>, myNodeId: String) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(nodes.size) { index ->
-            MemberItem(node = nodes[index], isHighlighted = nodes[index].id == myNodeId)
+            MemberItem(node = nodes[index], isHighlighted = nodes[index].id == myNodeId, onClick)
         }
     }
 }
 
 @Composable
-fun MemberItem(node: Member, isHighlighted: Boolean) {
+fun MemberItem(node: Member, isHighlighted: Boolean, onClick: (ipAddress: String) -> Unit) {
     val textColor = if (isHighlighted) Color.Yellow else Color.White
     val dateFormatter = SimpleDateFormat("d MMM, h:mm a", Locale.getDefault())
     val formattedDate = dateFormatter.format(Date(node.creationTime))
@@ -128,7 +147,9 @@ fun MemberItem(node: Member, isHighlighted: Boolean) {
 
     Card(
         shape = RoundedCornerShape(16.dp),
-
+        onClick = {
+            onClick(node.ipAssignments.first())
+        }
     ) {
         Row(
             modifier = Modifier

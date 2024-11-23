@@ -14,6 +14,7 @@ androidx-test-junit = "1.2.1"
 compose-multiplatform = "1.7.0"
 credentialsPlayServicesAuth = "1.5.0-beta01"
 junit = "4.13.2"
+kmpnotifier = "1.3.0"
 kotlin = "2.0.21"
 kotlinx-coroutines = "1.9.0"
 koin = "4.0.0"
@@ -28,6 +29,7 @@ googleid = "1.1.1"
 [libraries]
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentialsPlayServicesAuth" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
+kmpnotifier = { module = "io.github.mirzemehdi:kmpnotifier", version.ref = "kmpnotifier" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -52,6 +54,7 @@ touchlab-kermit-koin = { module = "co.touchlab:kermit-koin", version.ref = "kerm
 multiplatformSettings-common = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatformSettings" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-ios = { module = "io.ktor:ktor-client-ios", version.ref = "ktor" }
+ktor-client-socket = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
 ktor-client-okHttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
@@ -78,5 +81,5 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 skie = { id = "co.touchlab.skie", version.ref = "skie" }
 
 [bundles]
-ktor-common = ["ktor-client-core", "ktor-client-logging", "ktor-client-serialization", "ktor-client-contentNegotiation", "ktor-client-auth"]
+ktor-common = ["ktor-client-core", "ktor-client-logging", "ktor-client-serialization", "ktor-client-contentNegotiation", "ktor-client-auth", "ktor-client-socket"]
 voyager-common = ["voyager-bottomSheetNavigator", "voyager-koin", "voyager-navigator", "voyager-screenModel", "voyager-tabNavigator", "voyager-transitions"]

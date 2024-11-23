@@ -21,6 +21,7 @@ import org.koin.dsl.module
 
 const val tokenKey = "token"
 const val networkIdKey = "networkId"
+const val nodeIdKey = "nodeId"
 
 fun initKoin(appModule: Module): KoinApplication {
     val koinApplication = startKoin {
