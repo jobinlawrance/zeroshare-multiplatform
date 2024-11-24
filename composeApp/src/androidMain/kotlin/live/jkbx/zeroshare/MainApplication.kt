@@ -10,6 +10,8 @@ import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import live.jkbx.zeroshare.di.initKoin
+import live.jkbx.zeroshare.nebula.Nebula
+import live.jkbx.zeroshare.nebula.NebulaAndroidImpl
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
@@ -34,6 +36,7 @@ class MainApplication : Application() {
             }
             single<String>(named("serverId")) { getString(live.jkbx.zeroshare.shared.R.string.serverId) }
             factoryOf(::ZeroTierPeerImpl) { bind<ZeroTierPeer>() }
+            factoryOf(::NebulaAndroidImpl) { bind<Nebula>() }
         })
 
         NotifierManager.initialize(

@@ -29,6 +29,7 @@ import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.Member
 import live.jkbx.zeroshare.models.SSEEvent
+import live.jkbx.zeroshare.models.SignedKeyResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -98,6 +99,13 @@ class BackendApi : KoinComponent {
             }
         }
         client.close()
+    }
+
+    suspend fun signPublicKey(publicKey: String): SignedKeyResponse {
+        val req = client.postWithAuth("$baseUrl/nebula/sign-public-key") {
+            setBody(mapOf("public_key" to publicKey))
+        }
+        return req.body<SignedKeyResponse>()
     }
 
     private fun parseSseToken(data: String): SSEEvent {
