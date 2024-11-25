@@ -106,13 +106,15 @@ android {
         implementation(libs.koin.androidx.compose)
         implementation(libs.ktor.client.okHttp)
         implementation(files("../libs/libzt-release.aar"))
-        implementation(files("../libs/mobileNebula.aar"))
+        api(files("../libs/mobileNebula.aar"))
         implementation(libs.androidx.credentials)
         implementation(libs.androidx.credentials.play.services.auth)
         implementation(libs.googleid)
+        implementation(libs.androidx.security.crypto.ktx)
     }
 
 }
 dependencies {
     implementation(libs.googleid)
+    implementation(libs.androidx.security.crypto.ktx)
 }

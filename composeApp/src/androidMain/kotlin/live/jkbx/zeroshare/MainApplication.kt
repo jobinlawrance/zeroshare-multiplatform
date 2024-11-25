@@ -3,6 +3,8 @@ package live.jkbx.zeroshare
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.mmk.kmpnotifier.notification.NotifierManager
 import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfiguration
 import com.russhwolf.settings.Settings
@@ -20,6 +22,12 @@ import org.koin.dsl.module
 class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+
+        // In order to use the WorkManager from the nebulaVpnBg process (i.e. NebulaVpnService)
+        // we must explicitly initialize this rather than using the default initializer.
+        val myConfig = Configuration.Builder().build()
+        WorkManager.initialize(this, myConfig)
+
         initKoin(appModule = module {
             single<Context> { this@MainApplication }
             single<SharedPreferences> {
