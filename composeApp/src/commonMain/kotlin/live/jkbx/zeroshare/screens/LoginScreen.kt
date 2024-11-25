@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,9 +38,13 @@ import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.connectToNetwork
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.injectLogger
+import live.jkbx.zeroshare.nebula.IncomingSite
+import live.jkbx.zeroshare.nebula.Nebula
+import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.utils.getMachineName
 import live.jkbx.zeroshare.utils.getPlatform
 import live.jkbx.zeroshare.utils.loginWithGoogle
+import live.jkbx.zeroshare.utils.uniqueDeviceId
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.koin.core.component.KoinComponent
@@ -51,48 +56,36 @@ import zeroshare.composeapp.generated.resources.search
 import zeroshare.composeapp.generated.resources.zerotier
 import java.util.UUID
 
+
 class LoginScreen : Screen, KoinComponent {
 
-    private val zeroTierViewModel: ZeroTierViewModel by inject()
-    private val log: Logger by injectLogger("LoginScreen")
 
-    @OptIn(InternalVoyagerApi::class)
     @Composable
     override fun Content() {
+        val zeroTierViewModel: ZeroTierViewModel by inject()
+        val log: Logger by injectLogger("LoginScreen")
+        val backendApi by inject<BackendApi>()
         val buttonEnabled = remember { mutableStateOf(true) }
         val descriptionText = remember { mutableStateOf("") }
         val descriptionVisible = remember { mutableStateOf(false) }
-        val login = remember { mutableStateOf(false) }
+        val login = remember { mutableStateOf<Boolean?>(null) }
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        val isRendered = remember { mutableStateOf(false) }
         val navigator = LocalNavigator.currentOrThrow
 
-
-        if (login.value) {
-
+        // Invoke the composable function when the state is ready
+        login.value?.let {
             loginWithGoogle(
                 onLoginSuccess = { sseEvent ->
                     log.d { "$sseEvent" }
-                    descriptionVisible.value = true
-                    descriptionText.value = "Connecting to ZeroTier network - ${sseEvent.networkId} ..."
+//                    descriptionVisible.value = true
+//                    descriptionText.value = "Connecting to ZeroTier network - ${sseEvent.networkId} ..."
                     scope.launch {
-                        connectToNetwork(sseEvent.networkId, { nodeId ->
-                            scope.launch {
-                                val result =
-                                    zeroTierViewModel.setNodeId(
-                                        nodeId,
-                                        getMachineName(),
-                                        sseEvent.networkId,
-                                        getPlatform().name
-                                    )
-                                if (result) {
-                                    descriptionText.value = "Connected to ${sseEvent.networkId}"
-                                    withContext(Dispatchers.Main) {
-                                        navigator.replace(PeerScreen())
-                                    }
-                                }
-                            }
-                        })
+                        backendApi.setDeviceDetails(
+                            machineName = getMachineName(),
+                            platformName = getPlatform().name,
+                            deviceId = uniqueDeviceId()
+                        )
+                        navigator.replace(NebulaScreen())
                     }
                 },
                 onLoginError = { log.e(it) { "Error" } }

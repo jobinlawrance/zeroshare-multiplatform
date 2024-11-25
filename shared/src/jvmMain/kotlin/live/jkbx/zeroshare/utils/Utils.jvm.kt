@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
+import com.russhwolf.settings.get
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.di.tokenKey
@@ -53,3 +54,14 @@ class JVMPlatform: Platform {
 }
 
 actual fun getPlatform(): Platform = JVMPlatform()
+
+actual fun uniqueDeviceId(): String {
+    val settings by inject<Settings>(Settings::class.java)
+    val deviceId = settings.get("device_id", "")
+    if (deviceId.isEmpty()) {
+        val uuid = UUID.randomUUID().toString()
+        settings.putString("device_id", uuid)
+        return uuid
+    }
+    return deviceId
+}

@@ -101,9 +101,9 @@ class BackendApi : KoinComponent {
         client.close()
     }
 
-    suspend fun signPublicKey(publicKey: String): SignedKeyResponse {
+    suspend fun signPublicKey(publicKey: String, deviceId: String): SignedKeyResponse {
         val req = client.postWithAuth("$baseUrl/nebula/sign-public-key") {
-            setBody(mapOf("public_key" to publicKey))
+            setBody(mapOf("public_key" to publicKey, "device_id" to deviceId))
         }
         return req.body<SignedKeyResponse>()
     }
@@ -131,6 +131,23 @@ class BackendApi : KoinComponent {
             )
         })
 
+        return req.status == HttpStatusCode.OK
+    }
+
+    suspend fun setDeviceDetails(
+        machineName: String,
+        platformName: String,
+        deviceId: String
+    ): Boolean {
+        val req = client.postWithAuth("$baseUrl/device") {
+            setBody(
+                mapOf(
+                    "machine_name" to machineName,
+                    "platform" to platformName,
+                    "device_id" to deviceId
+                )
+            )
+        }
         return req.status == HttpStatusCode.OK
     }
 

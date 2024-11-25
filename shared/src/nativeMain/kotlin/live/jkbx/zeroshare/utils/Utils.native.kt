@@ -5,7 +5,6 @@ import live.jkbx.zeroshare.models.SSEEvent
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
-import kotlin.experimental.ExperimentalNativeApi
 
 
 actual fun openUrlInBrowser(url: String) {
@@ -37,3 +36,7 @@ class IOSPlatform: Platform {
 }
 
 actual fun getPlatform(): Platform = IOSPlatform()
+
+actual fun uniqueDeviceId(): String {
+    return UIDevice().identifierForVendor?.UUIDString!!
+}

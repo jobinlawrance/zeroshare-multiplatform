@@ -11,7 +11,7 @@ import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
-import org.koin.core.component.inject
+import android.provider.Settings as AndroidSettings
 import org.koin.java.KoinJavaComponent.inject
 
 actual fun openUrlInBrowser(url: String) {
@@ -49,3 +49,8 @@ class AndroidPlatform : Platform {
 }
 
 actual fun getPlatform(): Platform = AndroidPlatform()
+
+actual fun uniqueDeviceId(): String {
+    val context by inject<Context>(Context::class.java)
+    return AndroidSettings.Secure.getString(context.contentResolver, AndroidSettings.Secure.ANDROID_ID)
+}
