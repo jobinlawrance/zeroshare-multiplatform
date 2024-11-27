@@ -8,6 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.models.GoogleAuthCredentials
 import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.utils.SettingsUtil
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
@@ -64,6 +65,7 @@ private val coreModule = module {
     single { BackendApi() }
     single { ZeroTierViewModel() }
     factory { GoogleAuthCredentials(get(qualifier("serverId"))) }
+    single { SettingsUtil() }
 }
 
 internal inline fun <reified T> Scope.getWith(vararg params: Any?): T {

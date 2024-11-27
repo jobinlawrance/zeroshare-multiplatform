@@ -6,18 +6,33 @@ import UniformTypeIdentifiers
 enum NavigationPath {
     case login
     case main
+    case nebula_setup
 }
 
 // Create a navigation state manager
 class NavigationStateManager: ObservableObject {
-    @Published var currentPath: NavigationPath = .login
+    let settingsUtil = KotlinDependencies().getSettingsUtil()
+    
+    var path: NavigationPath
+    
+    @Published var currentPath: NavigationPath
+    
+    init() {
+        if settingsUtil.hasAuthKey() {
+            path = .nebula_setup
+        } else {
+            path = .login
+        }
+        // Initialize currentPath after path is determined
+        currentPath = path
+    }
 }
 
 class FileImportViewModel: ObservableObject {
     @Published var importedFileURL: URL?
     @Published var importedFileContent: String = ""
     
-    func importFile(url: URL) {
+    func importFile(url: URL, data: (String) -> Void) {
         do {
             // Verify file extension
             guard url.pathExtension.lowercased() == "pub" else {
@@ -35,17 +50,13 @@ class FileImportViewModel: ObservableObject {
             print("File Content: \(importedFileContent)")
             
             // Process the public file
-            processPublicFile()
+            data(importedFileContent)
         } catch {
             print("Error importing file: \(error.localizedDescription)")
             print("Full error: \(error)")
         }
     }
     
-    private func processPublicFile() {
-        // Add your specific .pub file processing logic here
-        print("Processing imported .pub file")
-    }
 }
 
 // Modify AppDelegate to improve file handling
@@ -113,6 +124,7 @@ struct iOSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var viewModel = FileImportViewModel()
     @State private var showImportSheet = false
+    @State private var publicKey: String = ""
     
     init() {
         startKoin()
@@ -125,9 +137,15 @@ struct iOSApp: App {
                     switch navigationManager.currentPath {
                     case .login:
                         LoginScreen()
+                    case .main:
+                        PeerScreen()
+                    case .nebula_setup:
+                        NebulaSetupView(publicKey: $publicKey)
                             .onOpenURL { url in
                                 print("NavigationStack: Received URL \(url)")
-                                handleShareFile(url)
+                                handleShareFile(url) {data in
+                                    publicKey = data
+                                }
                             }
                             .fileImporter(
                                 isPresented: $showImportSheet,
@@ -136,8 +154,6 @@ struct iOSApp: App {
                             ) { result in
                                 handleFileImporterResult(result)
                             }
-                    case .main:
-                        PeerScreen()
                     }
                 }
             }
@@ -145,12 +161,12 @@ struct iOSApp: App {
         }
     }
     
-    private func handleShareFile(_ url: URL) {
+    private func handleShareFile(_ url: URL, data: (String) -> Void) {
         print("Handling shared file: \(url)")
         
         // Additional handling for shared files
         if url.pathExtension.lowercased() == "pub" {
-            viewModel.importFile(url: url)
+            viewModel.importFile(url: url, data: data)
         }
     }
     
@@ -163,7 +179,7 @@ struct iOSApp: App {
                 return
             }
             
-            viewModel.importFile(url: fileURL)
+            viewModel.importFile(url: fileURL) {_ in}
             
             fileURL.stopAccessingSecurityScopedResource()
         } catch {

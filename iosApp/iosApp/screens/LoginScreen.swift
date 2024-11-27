@@ -72,17 +72,13 @@ struct LoginScreen: View {
                                     
                                     Task {
                                         let result = try await zeroTierViewModel.verifyGoogleToken(token: idToken!.tokenString)
-                                        isDescriptionVisible = true
-                                        descriptionText = "Conntecting to ZeroTier network - \(result.networkId)"
-                                        try await connectToZTNetwork(result.networkId, onNodeCreated: { nodeId in
-                                            Task {
-                                                try await zeroTierViewModel.setNodeId(nodeId: nodeId, machineName: getMachineName(), networkId: result.networkId,platformName: getPlatform().name)
-                                                descriptionText = "Connected to \(result.networkId)"
-                                                withAnimation {
-                                                            navigationManager.currentPath = .main
-                                                }
+                                        let backendApi = KotlinDependencies().getBackendApi()
+                                        let deviceResult = try await backendApi.setDeviceDetails(machineName: Utils_nativeKt.getMachineName(), platformName: Utils_nativeKt.getPlatform().name, deviceId: Utils_nativeKt.uniqueDeviceId())
+                                        if (deviceResult.boolValue) {
+                                            withAnimation {
+                                                navigationManager.currentPath = .nebula_setup
                                             }
-                                        })
+                                        }
                                     }
                                 }
                             
