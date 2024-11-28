@@ -37,6 +37,7 @@ kotlin {
             isStatic = true
             export(libs.touchlab.kermit.simple)
         }
+
     }
     
     jvm()
@@ -62,9 +63,11 @@ kotlin {
             implementation(libs.bundles.ktor.common)
             implementation(libs.touchlab.skie.annotations)
             api(libs.kmpnotifier)
-            api("io.github.vinceglb:filekit-core:0.8.7")
-            api("io.github.vinceglb:filekit-compose:0.8.7")
-
+            api(libs.filekit.core)
+            api(libs.filekit.compose)
+            api(libs.kotlin.stdlib)
+            implementation(libs.ktor.client.core) // For the Ktor client
+            api(libs.ktor.client.socket)
         }
 
         iosMain.dependencies {
@@ -77,6 +80,11 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(files("../libs/libzt-1.8.10.jar"))
+        }
+        getByName("commonMain") {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+            }
         }
     }
 }

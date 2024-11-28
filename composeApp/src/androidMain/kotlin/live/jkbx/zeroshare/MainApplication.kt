@@ -14,6 +14,10 @@ import io.ktor.client.engine.okhttp.OkHttp
 import live.jkbx.zeroshare.di.initKoin
 import live.jkbx.zeroshare.nebula.Nebula
 import live.jkbx.zeroshare.nebula.NebulaAndroidImpl
+import live.jkbx.zeroshare.socket.FileTransfer
+import live.jkbx.zeroshare.socket.JavaSocketFileTransfer
+import live.jkbx.zeroshare.socket.KmpHashing
+import live.jkbx.zeroshare.socket.KmpHashingAndroidImpl
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
@@ -45,6 +49,7 @@ class MainApplication : Application() {
             single<String>(named("serverId")) { getString(live.jkbx.zeroshare.shared.R.string.serverId) }
             factoryOf(::ZeroTierPeerImpl) { bind<ZeroTierPeer>() }
             factoryOf(::NebulaAndroidImpl) { bind<Nebula>() }
+            single<KmpHashing> { KmpHashingAndroidImpl() }
         })
 
         NotifierManager.initialize(

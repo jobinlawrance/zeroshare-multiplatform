@@ -44,6 +44,7 @@ kotlin {
             api(libs.multiplatformSettings.common)
             implementation(libs.ktor.client.cio)
             implementation(libs.bundles.voyager.common)
+            implementation(libs.kotlinx.serialization.json)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +42,7 @@ class NebulaScreen: Screen, KoinComponent {
         val nebula by inject<Nebula>()
         val backendApi by inject<BackendApi>()
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        val navigator = LocalNavigator.currentOrThrow
 
         LaunchedEffect(Unit) {
             val kp = nebula.generateKeyPair()
@@ -61,6 +64,7 @@ class NebulaScreen: Screen, KoinComponent {
         incomingSiteState.value?.let { incomingSite ->
             val dir = nebula.saveIncomingSite(incomingSite)
             log.d { "Site saved to $dir" }
+            navigator.replace(TransferScreen())
         }
 
         Box(

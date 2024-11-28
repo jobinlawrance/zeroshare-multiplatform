@@ -7,6 +7,7 @@ enum NavigationPath {
     case login
     case main
     case nebula_setup
+    case transfer
 }
 
 // Create a navigation state manager
@@ -19,7 +20,7 @@ class NavigationStateManager: ObservableObject {
     
     init() {
         if settingsUtil.hasAuthKey() {
-            path = .nebula_setup
+            path = .transfer
         } else {
             path = .login
         }
@@ -154,6 +155,8 @@ struct iOSApp: App {
                             ) { result in
                                 handleFileImporterResult(result)
                             }
+                    case .transfer:
+                        TransferScreen()
                     }
                 }
             }

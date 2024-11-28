@@ -7,6 +7,9 @@ import com.russhwolf.settings.Settings
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.darwin.Darwin
 import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.socket.FileSaver
+import live.jkbx.zeroshare.socket.FileTransfer
+import live.jkbx.zeroshare.socket.KmpHashing
 import live.jkbx.zeroshare.utils.SettingsUtil
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.koin.core.Koin
@@ -20,12 +23,15 @@ import platform.Foundation.NSUserDefaults
 
 fun initKoinIos(
     userDefaults: NSUserDefaults,
-    doOnStartup: () -> Unit
+    doOnStartup: () -> Unit,
+    kmpHashing: KmpHashing,
 ): KoinApplication = initKoin(
     module {
         single<Settings> { NSUserDefaultsSettings(userDefaults) }
         single { doOnStartup }
         single<HttpClientEngine> { Darwin.create() }
+        single { FileSaver }
+        single { kmpHashing }
     }
 )
 
@@ -38,6 +44,7 @@ object KotlinDependencies : KoinComponent {
     fun getZeroTierViewModel() = getKoin().get<ZeroTierViewModel>()
     fun getBackendApi() = getKoin().get<BackendApi>()
     fun getSettingsUtil() = getKoin().get<SettingsUtil>()
+    fun getFileSaver() = getKoin().get<FileSaver>()
 }
 
 actual val platformModule: Module = module {
