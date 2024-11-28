@@ -2,6 +2,7 @@ package live.jkbx.zeroshare.socket
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.*
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.socket.FileTransfer.Companion.CHUNK_SIZE
@@ -12,6 +13,13 @@ import java.security.MessageDigest
 import kotlin.math.roundToInt
 import kotlin.time.measureTime
 
+@Serializable
+enum class TransferStatus {
+    SUCCESS,
+    FAILED,
+    HASH_MISMATCH
+}
+
 class JavaSocketFileTransfer(
     private val log: Logger,
     private val host: String = "0.0.0.0",
@@ -20,6 +28,7 @@ class JavaSocketFileTransfer(
 
     private val jsonFormatter = Json { prettyPrint = false }
 
+    // Update startServer method in Kotlin
     override fun startServer(
         onFileReceived: (FileTransferMetadata, ByteArray) -> Unit
     ) = CoroutineScope(Dispatchers.IO).launch {
@@ -29,15 +38,15 @@ class JavaSocketFileTransfer(
             val clientSocket = serverSocket.accept()
 
             launch {
+                val outputStream = DataOutputStream(BufferedOutputStream(clientSocket.getOutputStream()))
                 try {
                     // Input streams
                     val inputStream = DataInputStream(BufferedInputStream(clientSocket.getInputStream()))
 
                     // Receive metadata
                     val metadataJson = inputStream.readUTF()
+                    log.d { "Metadata is $metadataJson" }
                     val metadata = jsonFormatter.decodeFromString<FileTransferMetadata>(metadataJson)
-
-                    log.d { "Metadata is $metadata" }
 
                     // Receive file
                     val receivedBytes = receiveFileBytes(inputStream, metadata)
@@ -46,18 +55,26 @@ class JavaSocketFileTransfer(
                     val hash = calculateFileHash(receivedBytes)
                     if (hash == metadata.fileHash) {
                         onFileReceived(metadata, receivedBytes)
+                        // Send success acknowledgement
+                        outputStream.writeUTF(TransferStatus.SUCCESS.name)
                     } else {
+                        // Send hash mismatch acknowledgement
+                        outputStream.writeUTF(TransferStatus.HASH_MISMATCH.name)
                         throw IllegalStateException("File hash mismatch")
                     }
                 } catch (e: Exception) {
-                    println("File transfer error: ${e.message}")
+                    // Send failure acknowledgement
+                    outputStream.writeUTF(TransferStatus.FAILED.name)
+                    log.e(e) {"File transfer error: ${e.message}"}
                 } finally {
+                    outputStream.flush()
                     clientSocket.close()
                 }
             }
         }
     }
 
+    // Update sendFile method
     override suspend fun sendFile(
         destinationIp: String,
         fileWrapper: SocketFileWrapper,
@@ -65,8 +82,8 @@ class JavaSocketFileTransfer(
     ) = withContext(Dispatchers.IO) {
         Socket(destinationIp, port).use { socket ->
             try {
-                // Prepare output streams
                 val outputStream = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
+                val inputStream = DataInputStream(BufferedInputStream(socket.getInputStream()))
 
                 // Prepare file data
                 val fileBytes = fileWrapper.toByteArray()
@@ -105,8 +122,22 @@ class JavaSocketFileTransfer(
                     }
                 }
 
-                listener?.onTransferComplete()
-                true
+                // Wait for receiver's acknowledgement
+                val status = TransferStatus.valueOf(inputStream.readUTF())
+                when (status) {
+                    TransferStatus.SUCCESS -> {
+                        listener?.onTransferComplete()
+                        true
+                    }
+                    TransferStatus.HASH_MISMATCH -> {
+                        listener?.onError(IOException("File hash mismatch on receiver side"))
+                        false
+                    }
+                    TransferStatus.FAILED -> {
+                        listener?.onError(IOException("Transfer failed on receiver side"))
+                        false
+                    }
+                }
             } catch (e: Exception) {
                 listener?.onError(e)
                 false

@@ -18,6 +18,8 @@
 import Foundation
 import Network
 import CryptoKit
+import SwiftyJSON
+
 
 protocol FileTransferListener {
     func onTransferProgress(_ progress: Float)
@@ -33,6 +35,12 @@ struct FileTransferMetadata: Codable {
     let transferType: String
 }
 
+enum TransferStatus: String, Codable {
+    case success
+    case failed
+    case hashMismatch
+}
+
 class SwiftSocketFileTransfer {
     private let host: String
     private let port: UInt16
@@ -45,41 +53,47 @@ class SwiftSocketFileTransfer {
     
     func startServer(onFileReceived: @escaping (FileTransferMetadata, Data) -> Void) {
         queue.async {
-            let listener = try? NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: self.port)!)
-            
-            listener?.newConnectionHandler = { connection in
-                connection.start(queue: self.queue)
-                
-                self.receiveFile(from: connection) { metadata, data in
-                    onFileReceived(metadata, data)
+            do {
+                let listener = try NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: self.port)!)
+                listener.newConnectionHandler = { connection in
+                    connection.start(queue: self.queue)
+                    self.receiveFile(from: connection) { result in
+                        switch result {
+                        case .success(let (metadata, data)):
+                            let fileHash = self.calculateFileHash(data)
+                            let status: TransferStatus = (fileHash == metadata.fileHash) ? .success : .hashMismatch
+                            self.sendAcknowledgement(connection: connection, status: status)
+                            
+                            if status == .success {
+                                onFileReceived(metadata, data)
+                            }
+                        case .failure(let error):
+                            print("Error receiving file: \(error.localizedDescription)")
+                        }
+                    }
                 }
+                listener.start(queue: self.queue)
+            } catch {
+                print("Failed to start server: \(error.localizedDescription)")
             }
-            
-            listener?.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    print("Server ready on \(self.host):\(self.port)")
-                case .failed(let error):
-                    print("Server failed: \(error)")
-                default:
-                    break
-                }
-            }
-            
-            listener?.start(queue: self.queue)
         }
     }
     
     func sendFile(destinationIp: String, fileWrapper: FileWrapper, listener: FileTransferListener?) {
         queue.async {
-            let connection = NWConnection(host: NWEndpoint.Host(destinationIp), port: NWEndpoint.Port(rawValue: self.port)!, using: .tcp)
+            guard let fileData = fileWrapper.regularFileContents,
+                  let fileName = fileWrapper.filename else {
+                listener?.onError(NSError(domain: "FileTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid file wrapper"]))
+                return
+            }
             
+            let connection = NWConnection(host: NWEndpoint.Host(destinationIp), port: NWEndpoint.Port(rawValue: self.port)!, using: .tcp)
             connection.start(queue: self.queue)
             
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    self.transferFile(connection: connection, fileWrapper: fileWrapper, listener: listener)
+                    self.transferFile(connection: connection, fileData: fileData, fileName: fileName, listener: listener)
                 case .failed(let error):
                     listener?.onError(error)
                 default:
@@ -89,67 +103,49 @@ class SwiftSocketFileTransfer {
         }
     }
     
-    private func receiveFile(from connection: NWConnection, completion: @escaping (FileTransferMetadata, Data) -> Void) {
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, context, isComplete, error in
-            guard let data = content else {
-                print("Error receiving file: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-            
-            do {
-                let decoder = JSONDecoder()
-                let metadata = try decoder.decode(FileTransferMetadata.self, from: data)
-                
-                // Wait for the file content
-                self.receiveFileData(connection: connection, expectedSize: metadata.fileSize) { fileData in
-                    completion(metadata, fileData)
-                }
-            } catch {
-                print("Error decoding metadata: \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    private func receiveFileData(connection: NWConnection, expectedSize: Int64, completion: @escaping (Data) -> Void) {
-        var receivedData = Data()
+    private func transferFile(connection: NWConnection, fileData: Data, fileName: String, listener: FileTransferListener?) {
+        let metadata = FileTransferMetadata(
+            fileName: fileName,
+            fileSize: Int64(fileData.count),
+            fileHash: calculateFileHash(fileData),
+            transferType: "UPLOAD"
+        )
         
-        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, context, isComplete, error in
-            guard let data = content else {
-                print("Error receiving file data: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-            
-            receivedData.append(data)
-            
-            if receivedData.count >= expectedSize {
-                completion(receivedData)
-            } else {
-                self.receiveFileData(connection: connection, expectedSize: expectedSize, completion: completion)
-            }
-        }
-    }
-    
-    private func transferFile(connection: NWConnection, fileWrapper: FileWrapper, listener: FileTransferListener?) {
         do {
-            let fileData = fileWrapper.regularFileContents!
-            let metadata = FileTransferMetadata(
-                fileName: fileWrapper.filename!,
-                fileSize: Int64(fileData.count),
-                fileHash: calculateFileHash(fileData),
-                transferType: "UPLOAD"
-            )
-            
             let encoder = JSONEncoder()
-            let metadataData = try encoder.encode(metadata)
-            
-            connection.send(content: metadataData, completion: .contentProcessed { error in
-                if let error = error {
-                    listener?.onError(error)
-                    return
-                }
+                let metadataData = try encoder.encode(metadata) // This gives us Data, not JSON
                 
-                self.sendFileData(connection: connection, fileData: fileData, listener: listener)
-            })
+                // Convert Data to a UTF-8 string (this will give you a valid JSON string)
+                if let metadataString = String(data: metadataData, encoding: .utf8) {
+                    print("Sending Metadata - \(metadataString)") // Logs the JSON as string
+                    
+                    // Calculate the length of the UTF-8 string
+                    let metadataLength = UInt16(metadataString.utf8.count)
+
+                    // Send the length and then the actual data
+                    var lengthData = Data()
+
+                    // Append the high byte and low byte of metadataLength to the Data object
+                    lengthData.append(UInt8(metadataLength >> 8))  // High byte
+                    lengthData.append(UInt8(metadataLength & 0xFF))  // Low byte
+
+                    // Append the actual metadata string as UTF-8 bytes
+                    lengthData.append(metadataString.data(using: .utf8)!)  // Send the actual data
+
+
+                    // Send the metadata string over the connection
+                    connection.send(content: lengthData, completion: .contentProcessed { error in
+                        if let error = error {
+                            listener?.onError(error)
+                            return
+                        }
+                    })
+                    
+                    self.sendFileData(connection: connection, fileData: fileData, listener: listener)
+                                
+                } else {
+                    print("Failed to convert metadata to UTF-8 string")
+                }
         } catch {
             listener?.onError(error)
         }
@@ -162,42 +158,99 @@ class SwiftSocketFileTransfer {
         let chunkSize = 65536
         var offset = 0
         
+        let group = DispatchGroup()
+        
         while offset < totalSize {
             let end = min(offset + chunkSize, totalSize)
             let chunk = fileData.subdata(in: offset..<end)
             
+            group.enter()
             connection.send(content: chunk, completion: .contentProcessed { error in
                 if let error = error {
                     listener?.onError(error)
+                    group.leave()
                     return
                 }
                 
                 sentBytes += chunk.count
-                offset += chunk.count
-                
-                let progress = Float(sentBytes) / Float(totalSize) * 100
+                let progress = Float(sentBytes) / Float(totalSize)
                 listener?.onTransferProgress(progress)
-                
-                let speed = self.calculateTransferSpeed(sentBytes)
-                listener?.onSpeedUpdate(speed)
                 
                 if sentBytes == totalSize {
                     listener?.onTransferComplete()
                 }
+                group.leave()
             })
+            offset += chunkSize
+        }
+        
+        group.wait()
+    }
+    
+    private func receiveFile(from connection: NWConnection, completion: @escaping (Result<(FileTransferMetadata, Data), Error>) -> Void) {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, context, isComplete, error in
+            guard let data = content else {
+                completion(.failure(error ?? NSError(domain: "FileTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
+                return
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                let metadata = try decoder.decode(FileTransferMetadata.self, from: data)
+                
+                self.receiveFileData(connection: connection, expectedSize: metadata.fileSize) { result in
+                    switch result {
+                    case .success(let fileData):
+                        completion(.success((metadata, fileData)))
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+            } catch {
+                completion(.failure(error))
+            }
         }
     }
     
-    private func calculateTransferSpeed(_ bytesTransferred: Int) -> String {
-        let kbps = Float(bytesTransferred) / 1024.0
-        return String(format: "%.2f KB/s", kbps)
+    private func receiveFileData(connection: NWConnection, expectedSize: Int64, completion: @escaping (Result<Data, Error>) -> Void) {
+        var receivedData = Data()
+        
+        func receiveNextChunk() {
+            connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { content, context, isComplete, error in
+                guard let data = content else {
+                    completion(.failure(error ?? NSError(domain: "FileTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
+                    return
+                }
+                
+                receivedData.append(data)
+                if receivedData.count >= expectedSize {
+                    completion(.success(receivedData))
+                } else {
+                    receiveNextChunk()
+                }
+            }
+        }
+        
+        receiveNextChunk()
+    }
+    
+    private func sendAcknowledgement(connection: NWConnection, status: TransferStatus) {
+        do {
+            let encoder = JSONEncoder()
+            let ackData = try encoder.encode(status)
+            
+            connection.send(content: ackData, completion: .contentProcessed { error in
+                if let error = error {
+                    print("Error sending acknowledgement: \(error.localizedDescription)")
+                }
+            })
+        } catch {
+            print("Error encoding acknowledgement: \(error.localizedDescription)")
+        }
     }
     
     private func calculateFileHash(_ data: Data) -> String {
         let digest = SHA256.hash(data: data)
-        let hashString = digest
-            .compactMap { String(format: "%02x", $0) }
-            .joined()
-        return hashString
+        return digest.map { String(format: "%02x", $0) }.joined()
     }
 }

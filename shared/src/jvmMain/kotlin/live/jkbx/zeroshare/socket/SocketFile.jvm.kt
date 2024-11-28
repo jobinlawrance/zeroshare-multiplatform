@@ -27,7 +27,7 @@ actual fun fromPlatformFile(file: PlatformFile): SocketFileWrapper {
 actual object FileSaver {
     actual fun saveFile(fileName: String, fileBytes: ByteArray) {
         val userHome = System.getProperty("user.home")
-        val file = java.io.File("$userHome/$fileName")
+        val file = java.io.File("$userHome/Documents/$fileName")
         file.writeBytes(fileBytes)
         println("File saved to ${file.absolutePath}")
     }
