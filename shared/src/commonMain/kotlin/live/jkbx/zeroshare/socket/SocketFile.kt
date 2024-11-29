@@ -11,6 +11,7 @@ interface SocketFileWrapper {
     fun toByteArray(): ByteArray
     fun getName(): String
     fun getSize(): Long
+    fun getPath(): String
 }
 
 expect fun fromPlatformFile(file: PlatformFile): SocketFileWrapper
@@ -52,6 +53,7 @@ expect object FileSaver {
     fun saveFile(fileName: String, fileBytes: ByteArray)
 }
 
+expect fun getPublicDirectory() : String
 
 suspend fun pickFile(): PlatformFile? {
     val files = FileKit.pickFile(

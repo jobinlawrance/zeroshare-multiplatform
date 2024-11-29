@@ -10,6 +10,7 @@ import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfig
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.engine.okhttp.OkHttp
 import live.jkbx.zeroshare.di.initKoin
 import live.jkbx.zeroshare.nebula.Nebula
@@ -18,6 +19,9 @@ import live.jkbx.zeroshare.socket.FileTransfer
 import live.jkbx.zeroshare.socket.JavaSocketFileTransfer
 import live.jkbx.zeroshare.socket.KmpHashing
 import live.jkbx.zeroshare.socket.KmpHashingAndroidImpl
+import okhttp3.ConnectionSpec
+import okhttp3.OkHttpClient
+import okhttp3.internal.applyConnectionSpec
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
@@ -44,7 +48,17 @@ class MainApplication : Application() {
                 SharedPreferencesSettings(get<SharedPreferences>())
             }
             single<HttpClientEngine> {
-                OkHttp.create()
+//                OkHttp.create {
+//                    preconfigured = OkHttpClient.Builder()
+//                        .connectionSpecs(
+//                            listOf(
+//                                ConnectionSpec.CLEARTEXT, // Allow HTTP (cleartext)
+//                                ConnectionSpec.MODERN_TLS // Support HTTPS
+//                            )
+//                        )
+//                        .build()
+//                }
+                CIO.create()
             }
             single<String>(named("serverId")) { getString(live.jkbx.zeroshare.shared.R.string.serverId) }
             factoryOf(::ZeroTierPeerImpl) { bind<ZeroTierPeer>() }

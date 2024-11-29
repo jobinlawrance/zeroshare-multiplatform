@@ -85,8 +85,8 @@ class LoginScreen : Screen, KoinComponent {
                             platformName = getPlatform().name,
                             deviceId = uniqueDeviceId()
                         )
-                        navigator.replace(TransferScreen()) //TODO
-//                        navigator.replace(NebulaScreen())
+//                        navigator.replace(TransferScreen()) //TODO
+                        navigator.replace(NebulaScreen())
                     }
                 },
                 onLoginError = { log.e(it) { "Error" } }

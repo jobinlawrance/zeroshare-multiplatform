@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.Packaging
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -17,18 +18,20 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     jvm("desktop")
-    
+
     sourceSets {
         val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.work.runtime)
             implementation(libs.androidx.work.runtime.ktx)
             implementation(libs.androidx.security.crypto.ktx)
+            implementation ("com.github.tony19:logback-android:3.0.0")
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -45,10 +48,19 @@ kotlin {
             implementation(libs.ktor.client.cio)
             implementation(libs.bundles.voyager.common)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.commons.net)
+            api(libs.ftpserver.core)
+            api(libs.ktor.server.cio)
+            api(libs.ktor.server.core)
+            api(libs.ktor.http)
+            implementation(libs.ktor.server.call.logging)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
+            implementation("org.slf4j:slf4j-api:2.0.16")
+            // Logback Classic (as the SLF4J backend)
+            implementation("ch.qos.logback:logback-classic:1.4.6")
         }
     }
 }
@@ -77,6 +89,16 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    // Excludes the file from all libraries
+
+    // Alternatively, exclude from specific libraries:
+    packaging {
+
+        resources.excludes.add("META-INF/DEPENDENCIES")
+        // Alternatively, exclude from specific libraries:
+        resources.excludes.add("com/apache/ftpserver/ftpserver-core/1.2.0/META-INF/DEPENDENCIES")
+        resources.excludes.add("com/apache/ftpserver/ftplet-api/1.2.0/META-INF/DEPENDENCIES")
     }
 }
 

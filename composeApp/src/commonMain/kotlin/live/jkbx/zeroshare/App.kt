@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.navigator.Navigator
 import live.jkbx.zeroshare.screens.LoginScreen
+import live.jkbx.zeroshare.screens.NebulaScreen
+import live.jkbx.zeroshare.screens.TransferScreen
 import live.jkbx.zeroshare.ui.theme.darkScheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -20,7 +22,9 @@ fun App() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Navigator(LoginScreen())
+//            Navigator(LoginScreen())
+            Navigator(TransferScreen())
+//            Navigator(NebulaScreen())
         }
     }
 }

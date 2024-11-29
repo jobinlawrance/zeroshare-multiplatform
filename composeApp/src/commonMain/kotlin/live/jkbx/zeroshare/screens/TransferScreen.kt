@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import io.github.vinceglb.filekit.core.PlatformDirectory
 import kotlinx.coroutines.CoroutineScope
@@ -26,11 +27,12 @@ import kotlinx.coroutines.launch
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.socket.FileTransferListener
 import live.jkbx.zeroshare.socket.JavaSocketFileTransfer
-import live.jkbx.zeroshare.socket.fromPlatformFile
 import org.koin.core.component.KoinComponent
+import live.jkbx.zeroshare.socket.KtorServer
+import live.jkbx.zeroshare.socket.SimpleFTPClient
+import live.jkbx.zeroshare.socket.SimpleFTPServer
+import live.jkbx.zeroshare.socket.fromPlatformFile
 import live.jkbx.zeroshare.socket.FileSaver
-import live.jkbx.zeroshare.socket.KtorFileTransfer
-import org.koin.core.component.inject
 
 class TransferScreen : KoinComponent, Screen {
 
@@ -38,17 +40,23 @@ class TransferScreen : KoinComponent, Screen {
     override fun Content() {
         val log by injectLogger("Transfer Screen")
         val fileTransfer = JavaSocketFileTransfer(log)
+        val ftpServer = SimpleFTPServer(log)
+        val ktorServer = KtorServer(log)
+        val ftpClient = SimpleFTPClient(log)
         val directory: PlatformDirectory? by remember { mutableStateOf(null) }
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val singleFilePicker = rememberFilePickerLauncher(
             type = PickerType.File(),
             title = "Single file picker",
+            mode = PickerMode.Single,
             initialDirectory = directory?.path,
             onResult = { file ->
-                val fileWrapper = fromPlatformFile(file!!)
+                log.d { "file: $file" }
                 scope.launch {
+//                    ktorServer.sendFile(ipAddress = "69.69.0.4", port = 6969, file = file!!)
+                    val fileWrapper = fromPlatformFile(file!!)
                     fileTransfer.sendFile(
-                        "69.69.0.3",
+                        "69.69.0.5",
                         fileWrapper,
                         object : FileTransferListener {
                             override fun onSpeedUpdate(speedString: String) {
@@ -66,8 +74,7 @@ class TransferScreen : KoinComponent, Screen {
                             override fun onError(throwable: Throwable) {
                                 log.e(throwable) {"Transfer Error: ${throwable.message}"}
                             }
-                        }
-                    )
+                        })
                 }
             },
             platformSettings = null
@@ -81,6 +88,8 @@ class TransferScreen : KoinComponent, Screen {
                 // Save or process received bytes
                 FileSaver.saveFile(metadata.fileName, receivedBytes)
             }
+//            ftpServer.start()
+//            ktorServer.startServer()
         }
 
         Column {

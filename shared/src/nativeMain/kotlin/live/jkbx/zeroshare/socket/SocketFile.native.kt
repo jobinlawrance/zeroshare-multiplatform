@@ -10,7 +10,7 @@ import platform.Foundation.getBytes
 import platform.Foundation.*
 import kotlinx.cinterop.*
 
-class FileWrapperNative(private val nsData: NSData, private val fileName: String) : SocketFileWrapper {
+class FileWrapperNative(private val nsData: NSData, private val fileName: String, private val nsUrl: NSURL) : SocketFileWrapper {
     @OptIn(ExperimentalForeignApi::class)
     override fun toByteArray(): ByteArray {
         // Convert NSData to ByteArray
@@ -28,11 +28,15 @@ class FileWrapperNative(private val nsData: NSData, private val fileName: String
         return nsData.length.toLong()
     }
 
+    override fun getPath(): String {
+        return nsUrl.path!!
+    }
+
     fun toData() = nsData
 }
 
 actual fun fromPlatformFile(file: PlatformFile): SocketFileWrapper {
-    return FileWrapperNative(file.nsUrl.dataRepresentation, file.name)
+    return FileWrapperNative(file.nsUrl.dataRepresentation, file.name, file.nsUrl)
 }
 
 
@@ -62,3 +66,12 @@ fun ByteArray.toNSData(): NSData {
     }
 }
 
+actual fun getPublicDirectory(): String {
+    val documentsDir = NSSearchPathForDirectoriesInDomains(
+        NSDocumentDirectory,
+        NSUserDomainMask,
+        true
+    ).firstOrNull() as? String
+
+    return documentsDir!!
+}

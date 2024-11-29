@@ -1,5 +1,6 @@
 package live.jkbx.zeroshare.network
 
+import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -35,49 +36,12 @@ import org.koin.core.component.inject
 
 class BackendApi : KoinComponent {
     private val settings: Settings by inject<Settings>()
-    private val engine: HttpClientEngine by inject<HttpClientEngine>()
     private val kJson: Json by inject<Json>()
     private val log by injectLogger("BackendAPI")
+    private val client by inject<HttpClient>()
 
     private val baseUrl = "https://zeroshare.jkbx.live"
 //    private val baseUrl = "http://localhost:4000"
-
-    private val contentTypePlugin = createClientPlugin("Content-Type") {
-        onRequest { request, _ ->
-            request.headers.append("Content-Type", "application/json")
-        }
-    }
-
-    private val client = HttpClient(engine) {
-        expectSuccess = true
-        install(ContentNegotiation) {
-            json(kJson)
-        }
-        install(Logging) {
-            logger = object : io.ktor.client.plugins.logging.Logger {
-                override fun log(message: String) {
-                    log.v { message }
-                }
-            }
-
-            level = LogLevel.ALL
-        }
-        install(SSE) {
-            showCommentEvents()
-            showRetryEvents()
-        }
-//        TODO: Not sure why this isn't working
-//        install(Auth) {
-//            bearer {
-//                sendWithoutRequest { true }
-//                loadTokens {
-//                    BearerTokens(settings.getString(tokenKey, ""), "")
-//                }
-//            }
-//
-//        }
-        install(contentTypePlugin)
-    }
 
     fun creteNetworkURL(sessionToken: String): String {
         return "$baseUrl/login/$sessionToken"
@@ -172,6 +136,7 @@ class BackendApi : KoinComponent {
     ): HttpResponse {
         return post(url, {
             block()
+            header(HttpHeaders.ContentType, "application/json")
             header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
         })
     }
@@ -182,7 +147,45 @@ class BackendApi : KoinComponent {
     ): HttpResponse {
         return get(url, {
             block()
+            header(HttpHeaders.ContentType, "application/json")
             header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
         })
     }
+}
+
+
+fun getHttpClient(engine: HttpClientEngine, kJson: Json): HttpClient {
+
+
+    val client = HttpClient(engine) {
+        expectSuccess = true
+        install(ContentNegotiation) {
+            json(kJson)
+        }
+        install(Logging) {
+            logger = object : io.ktor.client.plugins.logging.Logger {
+                override fun log(message: String) {
+//                    log.v { message }
+                }
+            }
+
+            level = LogLevel.ALL
+        }
+        install(SSE) {
+            showCommentEvents()
+            showRetryEvents()
+        }
+//        TODO: Not sure why this isn't working
+//        install(Auth) {
+//            bearer {
+//                sendWithoutRequest { true }
+//                loadTokens {
+//                    BearerTokens(settings.getString(tokenKey, ""), "")
+//                }
+//            }
+//
+//        }
+//        install(contentTypePlugin)
+    }
+    return client
 }

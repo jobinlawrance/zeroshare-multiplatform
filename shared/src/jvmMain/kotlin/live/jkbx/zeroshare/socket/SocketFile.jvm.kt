@@ -18,6 +18,9 @@ class FileWrapperJVM(private val file: java.io.File): SocketFileWrapper {
         return file.length()
     }
 
+    override fun getPath(): String {
+        return file.absolutePath
+    }
 }
 
 actual fun fromPlatformFile(file: PlatformFile): SocketFileWrapper {
@@ -39,4 +42,9 @@ class KmpHashingJVMImpl : KmpHashing {
         return digest.digest(bytesArray)
             .joinToString("") { "%02x".format(it) }
     }
+}
+
+actual fun getPublicDirectory(): String {
+    val userHome = System.getProperty("user.home")
+    return "$userHome/Documents"
 }

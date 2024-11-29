@@ -6,7 +6,7 @@ import java.io.File
 import java.security.MessageDigest
 
 // Common interface for file representation across platforms
-class FileWrapperAndroid(private val file: File): SocketFileWrapper {
+class FileWrapperAndroid(private val file: File) : SocketFileWrapper {
     override fun toByteArray(): ByteArray {
         return file.readBytes()
     }
@@ -19,6 +19,9 @@ class FileWrapperAndroid(private val file: File): SocketFileWrapper {
         return file.length()
     }
 
+    override fun getPath(): String {
+        return file.absolutePath
+    }
 }
 
 actual fun fromPlatformFile(file: PlatformFile): SocketFileWrapper {
@@ -27,7 +30,8 @@ actual fun fromPlatformFile(file: PlatformFile): SocketFileWrapper {
 
 actual object FileSaver {
     actual fun saveFile(fileName: String, fileBytes: ByteArray) {
-        val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+        val downloadsDir =
+            android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
         val file = java.io.File(downloadsDir, fileName)
         file.writeBytes(fileBytes)
         println("File saved to ${file.absolutePath}")
@@ -42,3 +46,8 @@ class KmpHashingAndroidImpl : KmpHashing {
     }
 }
 
+actual fun getPublicDirectory(): String {
+    return android.os.Environment
+        .getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+        .absolutePath
+}
