@@ -25,6 +25,7 @@ import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.io.readByteArray
 import org.koin.core.component.KoinComponent
@@ -33,6 +34,8 @@ import org.slf4j.Marker
 import org.slf4j.event.Level
 import java.io.ByteArrayInputStream
 import java.io.File
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class KtorServer(private val log: Logger) : KoinComponent {
 
@@ -126,6 +129,19 @@ class KtorServer(private val log: Logger) : KoinComponent {
         }
 
         chunks.forEachIndexed { index, chunk ->
+            upload(ipAddress, port, index, chunk, file, chunks)
+        }
+    }
+
+    suspend fun upload(
+        ipAddress: String,
+        port: Int,
+        index: Int,
+        chunk: ByteArray,
+        file: PlatformFile,
+        chunks: List<ByteArray>
+    ) {
+        try {
             client.submitFormWithBinaryData(
                 url = "http://$ipAddress:$port/upload",
                 formData = formData {
@@ -139,6 +155,10 @@ class KtorServer(private val log: Logger) : KoinComponent {
                 header("chunk-number", index + 1)
                 header("total-chunks", chunks.size)
             }
+        } catch (e: Exception) {
+            log.e(e) { "Error uploading chunk #${index + 1}" }
+            delay(timeMillis = 500L)
+            upload(ipAddress, port, index, chunk, file, chunks)
         }
     }
 }
