@@ -15,7 +15,7 @@ import java.io.File
 class NebulaAndroidImpl : Nebula, KoinComponent {
     private val json by inject<Json>()
 
-    override fun generateKeyPair(): Key {
+    override suspend fun generateKeyPair(): Key {
         val kp = mobileNebula.MobileNebula.generateKeyPair()
         val key = json.decodeFromString<Key>(kp)
         return key

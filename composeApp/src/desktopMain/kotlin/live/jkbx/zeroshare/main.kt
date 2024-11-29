@@ -10,6 +10,8 @@ import com.russhwolf.settings.Settings
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import live.jkbx.zeroshare.di.initKoin
+import live.jkbx.zeroshare.nebula.Nebula
+import live.jkbx.zeroshare.nebula.NebulaJVMImpl
 import live.jkbx.zeroshare.socket.FileTransfer
 import live.jkbx.zeroshare.socket.JavaSocketFileTransfer
 import live.jkbx.zeroshare.socket.KmpHashing
@@ -26,6 +28,7 @@ fun main() = application {
         single<HttpClientEngine> { CIO.create() }
         factoryOf(::ZeroTierPeerImpl) { bind<ZeroTierPeer>() }
         single<KmpHashing> { KmpHashingJVMImpl() }
+        single<Nebula> { NebulaJVMImpl() }
     })
 
     NotifierManager.initialize(

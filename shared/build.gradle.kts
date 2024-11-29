@@ -80,6 +80,7 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(files("../libs/libzt-1.8.10.jar"))
+            implementation("org.apache.commons:commons-compress:1.27.1") // For extracting tar.gz
         }
         getByName("commonMain") {
             dependencies {
