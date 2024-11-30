@@ -7,6 +7,9 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.serialization.json.Json
+import live.jkbx.zeroshare.models.SignedKeyResponse
+import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.utils.uniqueDeviceId
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import java.io.File
@@ -14,8 +17,9 @@ import java.io.File
 
 class NebulaAndroidImpl : Nebula, KoinComponent {
     private val json by inject<Json>()
+    private val backendApi by inject<BackendApi> ()
 
-    override suspend fun generateKeyPair(): Key {
+    override suspend fun generateKeyPair(messages: (String) -> Unit, downloadProgress: (Int) -> Unit): Key {
         val kp = mobileNebula.MobileNebula.generateKeyPair()
         val key = json.decodeFromString<Key>(kp)
         return key
@@ -40,7 +44,7 @@ class NebulaAndroidImpl : Nebula, KoinComponent {
     }
 
     @Composable
-    override fun saveIncomingSite(incomingSite: IncomingSite): Result<File> {
+    override fun saveIncomingSite(incomingSite: IncomingSite, messages: (String) -> Unit): Result<File> {
         val baseDir = LocalContext.current.filesDir
         val siteDir = baseDir.resolve("sites").resolve(incomingSite.id)
         if (!siteDir.exists()) {
@@ -67,6 +71,10 @@ class NebulaAndroidImpl : Nebula, KoinComponent {
         }
 
         return Result.success(siteDir)
+    }
+
+    override suspend fun signCertificate(publicKey: String): SignedKeyResponse {
+        return backendApi.signPublicKey(publicKey, uniqueDeviceId())
     }
 
     private fun validateOrDeleteSite(siteDir: File, context: Context): Boolean {

@@ -41,7 +41,7 @@ class BackendApi : KoinComponent {
     private val client by inject<HttpClient>()
 
     private val baseUrl = "https://zeroshare.jkbx.live"
-//    private val baseUrl = "http://localhost:4000"
+//    private val baseUrl = "http://192.168.0.101:4000"
 
     fun creteNetworkURL(sessionToken: String): String {
         return "$baseUrl/login/$sessionToken"
@@ -154,8 +154,7 @@ class BackendApi : KoinComponent {
 }
 
 
-fun getHttpClient(engine: HttpClientEngine, kJson: Json): HttpClient {
-
+fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClient {
 
     val client = HttpClient(engine) {
         expectSuccess = true
@@ -165,7 +164,7 @@ fun getHttpClient(engine: HttpClientEngine, kJson: Json): HttpClient {
         install(Logging) {
             logger = object : io.ktor.client.plugins.logging.Logger {
                 override fun log(message: String) {
-//                    log.v { message }
+                    log.v { message }
                 }
             }
 

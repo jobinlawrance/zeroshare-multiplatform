@@ -22,9 +22,7 @@ fun App() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-//            Navigator(LoginScreen())
-            Navigator(TransferScreen())
-//            Navigator(NebulaScreen())
+            Navigator(LoginScreen())
         }
     }
 }

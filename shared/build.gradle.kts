@@ -80,11 +80,16 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(files("../libs/libzt-1.8.10.jar"))
-            implementation("org.apache.commons:commons-compress:1.27.1") // For extracting tar.gz
+            implementation(libs.commons.compress) // For extracting tar.gz
+            implementation(libs.retrofit)
+            implementation(libs.converter.kotlinx.serialization)
+            implementation(libs.adapter.rxjava)
+            implementation(libs.okhttp)
+            implementation(libs.logging.interceptor)
         }
         getByName("commonMain") {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+                implementation(libs.kotlinx.coroutines.core)
             }
         }
     }

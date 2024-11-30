@@ -30,6 +30,8 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +40,8 @@ import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.connectToNetwork
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.injectLogger
+import live.jkbx.zeroshare.di.nebulaSetupKey
+import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.nebula.IncomingSite
 import live.jkbx.zeroshare.nebula.Nebula
 import live.jkbx.zeroshare.network.BackendApi
@@ -59,10 +63,8 @@ import java.util.UUID
 
 class LoginScreen : Screen, KoinComponent {
 
-
     @Composable
     override fun Content() {
-        val zeroTierViewModel: ZeroTierViewModel by inject()
         val log: Logger by injectLogger("LoginScreen")
         val backendApi by inject<BackendApi>()
         val buttonEnabled = remember { mutableStateOf(true) }
@@ -71,22 +73,35 @@ class LoginScreen : Screen, KoinComponent {
         val login = remember { mutableStateOf<Boolean?>(null) }
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val navigator = LocalNavigator.currentOrThrow
+        val settings by inject<Settings>()
+
+        LaunchedEffect(Unit) {
+            if (settings.getString(tokenKey, "").isNotEmpty()) {
+                if (settings.getBoolean(nebulaSetupKey, false)) {
+                    navigator.replace(TransferScreen())
+                } else {
+                    navigator.replace(NebulaScreen())
+                }
+            }
+        }
 
         // Invoke the composable function when the state is ready
         login.value?.let {
             loginWithGoogle(
                 onLoginSuccess = { sseEvent ->
                     log.d { "$sseEvent" }
-//                    descriptionVisible.value = true
-//                    descriptionText.value = "Connecting to ZeroTier network - ${sseEvent.networkId} ..."
+
                     scope.launch {
                         backendApi.setDeviceDetails(
                             machineName = getMachineName(),
                             platformName = getPlatform().name,
                             deviceId = uniqueDeviceId()
                         )
-//                        navigator.replace(TransferScreen()) //TODO
-                        navigator.replace(NebulaScreen())
+                        if (settings.getBoolean(nebulaSetupKey, false)) {
+                            navigator.replace(TransferScreen())
+                        } else {
+                            navigator.replace(NebulaScreen())
+                        }
                     }
                 },
                 onLoginError = { log.e(it) { "Error" } }

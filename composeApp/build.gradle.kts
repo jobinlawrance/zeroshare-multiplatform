@@ -45,7 +45,7 @@ kotlin {
             implementation(projects.shared)
             implementation(libs.koin.core)
             api(libs.multiplatformSettings.common)
-            implementation(libs.ktor.client.cio)
+            implementation(libs.ktor.client.okHttp)
             implementation(libs.bundles.voyager.common)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.commons.net)
@@ -58,9 +58,10 @@ kotlin {
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
-            implementation("org.slf4j:slf4j-api:2.0.16")
+            implementation(libs.slf4j.api)
             // Logback Classic (as the SLF4J backend)
-            implementation("ch.qos.logback:logback-classic:1.4.6")
+            implementation(libs.logback.classic)
+
         }
     }
 }

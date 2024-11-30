@@ -1,71 +1,328 @@
 package live.jkbx.zeroshare.nebula
 
 import androidx.compose.runtime.Composable
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.get
+import com.russhwolf.settings.set
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.plugins.onDownload
 import io.ktor.client.request.get
 import io.ktor.client.request.header
-import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
+import live.jkbx.zeroshare.di.nebulaSetupKey
+import live.jkbx.zeroshare.di.tokenKey
+import live.jkbx.zeroshare.models.SignedKeyResponse
+import live.jkbx.zeroshare.utils.uniqueDeviceId
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.ResponseBody
+import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.create
+import retrofit2.http.Body
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.POST
+import retrofit2.http.Streaming
+import retrofit2.http.Url
+import rx.Observable
+import rx.schedulers.Schedulers
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStreamReader
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipFile
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.readText
 
 class NebulaJVMImpl : Nebula, KoinComponent {
 
     private val log by injectLogger("Nebula")
     private val client by inject<HttpClient>()
+    private val settings by inject<Settings>()
+    private val json by inject<Json>()
 
-    override suspend fun generateKeyPair(): Key {
-        checkAndInstallNebula()
+    private val okHttpClient = OkHttpClient.Builder()
+        .connectTimeout(2, TimeUnit.MINUTES)
+        .readTimeout(2, TimeUnit.MINUTES)
+        .writeTimeout(2, TimeUnit.MINUTES)
+        .addNetworkInterceptor(HttpLoggingInterceptor())
+        .build()
 
-        return Key("", "")
+    private val retrofit: Retrofit = Retrofit.Builder()
+        .client(okHttpClient)
+        .baseUrl("https://zeroshare.jkbx.live/")
+        .addConverterFactory(
+            json.asConverterFactory("application/json; charset=UTF8".toMediaType())
+        )
+        .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+        .build()
+
+    private val api = retrofit.create<RetrofitBackendApi>()
+
+    override suspend fun generateKeyPair(
+        messages: (String) -> Unit,
+        downloadProgress: (Int) -> Unit
+    ): Key {
+        checkAndInstallNebula(messages, downloadProgress)
+
+        messages("Generating Key Pair with Nebula Cert")
+        val tempDir = withContext(Dispatchers.IO) {
+            Files.createTempDirectory("nebula-cert-")
+        }
+        var publicKey = ""
+        var privateKey = ""
+        try {
+            // Run the nebula-cert keygen command
+            val process = withContext(Dispatchers.IO) {
+                ProcessBuilder(
+                    "nebula-cert",
+                    "keygen",
+                    "-out-key", tempDir.resolve("host.key").toString(),
+                    "-out-pub", tempDir.resolve("host.pub").toString()
+                ).directory(tempDir.toFile()) // Ensure command runs in the temp directory
+                    .redirectErrorStream(true) // Combine error stream with output stream
+                    .start()
+            }
+
+            // Wait for the process to finish
+            val exitCode = withContext(Dispatchers.IO) {
+                process.waitFor()
+            }
+            if (exitCode != 0) {
+                val errorOutput = process.inputStream.bufferedReader().readText()
+                throw RuntimeException("nebula-cert command failed with exit code $exitCode: $errorOutput")
+            }
+
+            // Read the generated files
+            privateKey = tempDir.resolve("host.key").readText()
+            publicKey = tempDir.resolve("host.pub").readText()
+        } finally {
+            // Clean up the temp directory and its contents
+            withContext(Dispatchers.IO) {
+                Files.walk(tempDir)
+            }
+                .sorted(Comparator.reverseOrder()) // Delete files before directories
+                .forEach(Files::deleteIfExists)
+        }
+
+        messages("Generated Keys Successfully")
+        return Key(publicKey, privateKey)
     }
 
-    private suspend fun checkAndInstallNebula() {
+    private suspend fun checkAndInstallNebula(
+        messages: (String) -> Unit,
+        downloadProgress: (Int) -> Unit
+    ) {
         val nebulaExists = runCommand("which nebula")
         log.d { nebulaExists }
         if (nebulaExists.contains("/usr/local/bin/nebula")) {
             // we already have nebula
             log.d { "Nebula already exists" }
+            messages("Nebula is installed at $nebulaExists")
         } else {
-            downloadNebula()
+            downloadNebula(messages, downloadProgress)
         }
     }
 
     override fun parseCert(cert: String): Result<String> {
 
-        return Result.success("")
+        return Result.success("NO_OP in JVM")
     }
 
     override fun verifyCertAndKey(cert: String, key: String): Result<Boolean> {
         return Result.success(true)
     }
 
+    override suspend fun signCertificate(publicKey: String): SignedKeyResponse {
+
+        val token = settings.get<String>(tokenKey)
+        return api.signPublicKey(
+            SignPublicKeyRequest(publicKey, uniqueDeviceId()), authToken = "Bearer $token"
+        )
+            .subscribeOn(Schedulers.io())
+            .toBlocking()
+            .first()
+    }
+
     @Composable
-    override fun saveIncomingSite(incomingSite: IncomingSite): Any {
+    override fun saveIncomingSite(incomingSite: IncomingSite, messages: (String) -> Unit): Any {
+
+        log.d { "Saving Incoming Site" }
+        messages("Saving incoming site")
+
+
+        val lightHouseIp = incomingSite.staticHostmap.keys.first()
+        val staticHostMap = incomingSite.staticHostmap.get(lightHouseIp)!!.destinations.first()
+
+        messages("Nebula Lighthouse \uD83D\uDCA1 - $lightHouseIp")
+
+        val configContent = """
+        # PKI paths
+        pki:
+          ca: /etc/zeroshare/ca.crt
+          cert: /etc/zeroshare/host.crt
+          key: /etc/zeroshare/host.key
+
+        # Need a static host map, using the DNS name of the lighthouse
+        static_host_map:
+          # Put all of your lighthouses here
+          '$lightHouseIp': ['$staticHostMap']
+
+        # This is completely undocumented
+        # static_map is how to interpret static_host_map
+        # It defaults to ip4, trying to connect to the lighthouse
+        # using only ipv4. This sorta-kinda makes sense since the node
+        # knows its own public v6 already but not its public v4 (Via NAT)
+        # so connecting to the lighthouse via v4 lets it learn that
+        # For ipv6-only hosts, change to `ip6` instead
+        static_map:
+          network: ip4
+
+        # Lighthouse config for clients
+        lighthouse:
+          hosts:
+            - '$lightHouseIp'
+
+        # Listen
+        listen:
+          # Default for this key is 0.0.0.0 which is v4-only and stupid
+          host: '[::]'
+          # Port of 0 means randomly choose, usually good for clients
+          # Want to set to 4242 for relays and lighthouses
+          port: 0
+
+        # Firewall settings
+        firewall:
+          outbound:
+            # Allow all outbound traffic from this node
+            - port: any
+              proto: any
+              host: any
+
+          inbound:
+            # Allow icmp between any nebula hosts
+            - port: any
+              proto: any
+              host: any
+    """.trimIndent()
+
+        val serviceText = """
+            [Unit]
+            Description=Nebula Service
+            Wants=basic.target network-online.target nss-lookup.target time-sync.target
+            After=network.target
+
+            [Service]
+            SyslogIdentifier=nebula
+            ExecStart=/usr/local/bin/nebula -config /etc/zeroshare/config.yml
+            Restart=on-always
+            User=root
+
+            [Install]
+            WantedBy=multi-user.target
+        """.trimIndent()
+
+        val launchText = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>Label</key>
+                <string>com.nebula</string>
+                <key>ProgramArguments</key>
+                <array>
+                    <string>/usr/local/bin/nebula</string>
+                    <string>-config</string>
+                    <string>/etc/zeroshare/config.yml</string>
+                </array>
+                <key>RunAtLoad</key>
+                <true/>
+                <key>KeepAlive</key>
+                <true/>
+                <key>StandardErrorPath</key>
+                <string>/var/log/nebula.err</string>
+                <key>StandardOutPath</key>
+                <string>/var/log/nebula.log</string>
+            </dict>
+            </plist>
+        """.trimIndent()
+
+        val tempDir = Files.createTempDirectory("nebula-config-")
+
+        val configFile = tempDir.resolve("config.yml")
+        val caFile = tempDir.resolve("ca.crt")
+        val hostFile = tempDir.resolve("host.crt")
+        val hostKey = tempDir.resolve("host.key")
+//        val serviceFile = tempDir.resolve("nebula.service")
+        val launchFile = tempDir.resolve("com.nebula.plist")
+
+        // Write the configuration content to the file
+        Files.writeString(configFile, configContent)
+        Files.writeString(caFile, incomingSite.ca)
+        Files.writeString(hostFile, incomingSite.cert)
+        Files.writeString(hostKey, incomingSite.key)
+//        Files.writeString(serviceFile, serviceText)
+        Files.writeString(launchFile, launchText)
+
+        log.d { "Files are created at ${tempDir.absolutePathString()}" }
+
+        val result = runWithAdminPrivilegesMac(
+            "mkdir -p /etc/zeroshare " +
+                    "&& cp $tempDir/ca.crt /etc/zeroshare/ " +
+                    "&& cp $tempDir/host.crt /etc/zeroshare/ " +
+                    "&& cp $tempDir/host.key /etc/zeroshare/ " +
+//                    "&& cp $tempDir/nebula.service /etc/systemd/system/" +
+                    "&& sudo cp $tempDir/com.nebula.plist /Library/LaunchDaemons/" +
+                    "&& sudo route delete 69.69.0.0/16" +
+//                    "sudo systemctl daemon-reload" +
+//                    "sudo systemctl enable nebula.service" +
+//                    "sudo systemctl start nebula.service" +
+                    "&& sudo launchctl unload /Library/LaunchDaemons/com.nebula.plist" +
+                    "&& sudo launchctl load /Library/LaunchDaemons/com.nebula.plist" +
+                    "&& sudo launchctl start com.nebula" +
+                    "&& sudo cat /var/log/nebula.log"
+        )
+
+        messages(result)
+        settings.set(nebulaSetupKey, true)
         return Result.success("")
     }
 
-    private suspend fun downloadNebula() {
+    private suspend fun downloadNebula(
+        messages: (String) -> Unit,
+        downloadProgress: (Int) -> Unit
+    ) {
+
         val os = detectOS()
         val arch = detectArchitecture()
 
+        messages("Fetching latest release from Github")
         // Get Latest Release from Github API
         val githubApi = "https://api.github.com/repos/slackhq/nebula/releases/latest"
         val request = client.get(githubApi) {
@@ -73,6 +330,7 @@ class NebulaJVMImpl : Nebula, KoinComponent {
         }
         val release = request.body<GithubReleaseResponse>()
         log.d { "Latest Release is ${release.name}" }
+        messages("Latest Release is ${release.name}")
 
         // Filter assets by OS name first
         val osAssets = release.assets.filter { it.name.contains(os, ignoreCase = true) }
@@ -94,8 +352,11 @@ class NebulaJVMImpl : Nebula, KoinComponent {
         }
 
         log.d { "Downloading ${asset.name}" }
+        messages("Downloading ${asset.name}")
 
-        val file = downloadFile(client, asset.browserDownloadUrl, asset.name)
+        val file = downloadFile(asset.browserDownloadUrl, asset.name, downloadProgress)
+
+        messages("Downloaded the file")
 
         val tempFileDir = withContext(Dispatchers.IO) {
             Files.createTempDirectory("tmpDir")
@@ -116,30 +377,38 @@ class NebulaJVMImpl : Nebula, KoinComponent {
         runCommand("rm ${file.absolutePath}")
     }
 
-    private suspend fun downloadFile(client: HttpClient, url: String, fileName: String): File {
+    private suspend fun downloadFile(
+        url: String,
+        fileName: String,
+        downloadProgress: (Int) -> Unit
+    ): File {
         val tempFile = withContext(Dispatchers.IO) {
             File.createTempFile("nebula", fileName)
         }
 
-        try {
-            val httpResponse: HttpResponse = client.get(url) {
-                onDownload { bytesSentTotal, contentLength ->
-                    log.d { "Progress - $bytesSentTotal and $contentLength" }
+        val responseBody = withContext(Dispatchers.IO) {
+            api.downloadAsset(url)
+        }
+
+        // Use CompletableDeferred to signal completion
+        val fileDeferred = CompletableDeferred<File>()
+
+        responseBody.saveFile(tempFile).collect { downloadState ->
+            when (downloadState) {
+                is DownloadState.Downloading -> {
+                    downloadProgress(downloadState.progress)
+                }
+
+                is DownloadState.Failed -> {
+                    fileDeferred.completeExceptionally(downloadState.error)
+                }
+
+                DownloadState.Finished -> {
+                    fileDeferred.complete(tempFile)
                 }
             }
-            val responseBody: ByteArray = httpResponse.body()
-            tempFile.writeBytes(responseBody)
-            log.d { ("Downloaded file to: ${tempFile.absolutePath} (Size: ${tempFile.length()} bytes)") }
-
-            if (tempFile.length() == 0L) {
-                throw IOException("Downloaded file is empty: ${tempFile.absolutePath}")
-            }
-
-            return tempFile
-        } catch (e: Exception) {
-            tempFile.delete() // Clean up on failure
-            throw IOException("Error downloading file from $url", e)
         }
+        return fileDeferred.await()
     }
 
     private fun extractAndPlaceBinary(file: File, destinationDir: String) {
@@ -277,3 +546,55 @@ data class GithubAssets(
     val name: String,
     @SerialName("browser_download_url") val browserDownloadUrl: String
 )
+
+@Serializable
+data class SignPublicKeyRequest(
+    val public_key: String,
+    val device_id: String
+)
+
+interface RetrofitBackendApi {
+
+    @POST("nebula/sign-public-key")
+    fun signPublicKey(
+        @Body request: SignPublicKeyRequest,
+        @Header("Authorization") authToken: String
+    ): Observable<SignedKeyResponse>
+
+    @GET
+    @Streaming
+    suspend fun downloadAsset(@Url url: String): ResponseBody
+}
+
+private fun ResponseBody.saveFile(destinationFile: File): Flow<DownloadState> {
+    return flow {
+        emit(DownloadState.Downloading(0))
+        try {
+            byteStream().use { inputStream ->
+                destinationFile.outputStream().use { outputStream ->
+                    val totalBytes = contentLength()
+                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                    var progressBytes = 0L
+                    var bytes = inputStream.read(buffer)
+                    while (bytes >= 0) {
+                        outputStream.write(buffer, 0, bytes)
+                        progressBytes += bytes
+                        bytes = inputStream.read(buffer)
+                        emit(DownloadState.Downloading(((progressBytes * 100) / totalBytes).toInt()))
+                    }
+                }
+            }
+            emit(DownloadState.Finished)
+        } catch (e: Exception) {
+            emit(DownloadState.Failed(e))
+        }
+    }
+        .flowOn(Dispatchers.IO).distinctUntilChanged()
+}
+
+
+private sealed class DownloadState {
+    data class Downloading(val progress: Int) : DownloadState()
+    object Finished : DownloadState()
+    data class Failed(val error: Throwable) : DownloadState()
+}

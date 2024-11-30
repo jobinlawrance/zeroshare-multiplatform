@@ -11,6 +11,7 @@ androidx-espresso-core = "3.6.1"
 androidx-lifecycle = "2.8.3"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
+commonsCompress = "1.27.1"
 commonsNet = "3.11.1"
 compose-multiplatform = "1.7.0"
 credentialsPlayServicesAuth = "1.5.0-beta01"
@@ -24,10 +25,13 @@ koin = "4.0.0"
 koin-compose = "4.0.0"
 kermit = "2.0.4"
 kotlinxSerializationJson = "1.7.3"
+logbackClassic = "1.4.6"
 multiplatformSettings = "1.2.0"
 ktor = "3.0.1"
 okio = "3.9.1"
 okhttp = "4.12.0"
+retrofit = "2.11.0"
+slf4jApi = "2.0.16"
 voyager = "1.1.0-beta03"
 skie = "0.9.3"
 googleid = "1.1.1"
@@ -35,11 +39,14 @@ workRuntime = "2.10.0"
 securityCryptoKtx = "1.0.0"
 
 [libraries]
+adapter-rxjava = { module = "com.squareup.retrofit2:adapter-rxjava", version.ref = "retrofit" }
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentialsPlayServicesAuth" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentialsPlayServicesAuth" }
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "workRuntime" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntime" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
 commons-net = { module = "commons-net:commons-net", version.ref = "commonsNet" }
+converter-kotlinx-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 filekit-compose = { module = "io.github.vinceglb:filekit-compose", version.ref = "filekitCore" }
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekitCore" }
 ftpserver-core = { module = "org.apache.ftpserver:ftpserver-core", version.ref = "ftpserverCore" }
@@ -57,6 +64,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", version.ref = "koin" }
@@ -69,9 +77,12 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor"
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logbackClassic" }
 logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor" , version.ref = "okhttp"}
 okhttp = { module = "com.squareup.okhttp3:okhttp" , version.ref = "okhttp"}
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4jApi" }
 touchlab-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 touchlab-kermit-simple = { module = "co.touchlab:kermit-simple", version.ref = "kermit" }
 touchlab-kermit-koin = { module = "co.touchlab:kermit-koin", version.ref = "kermit" }

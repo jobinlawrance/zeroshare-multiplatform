@@ -26,6 +26,7 @@ import org.koin.dsl.module
 const val tokenKey = "token"
 const val networkIdKey = "networkId"
 const val nodeIdKey = "nodeId"
+const val nebulaSetupKey = "nebulaSetup"
 
 fun initKoin(appModule: Module): KoinApplication {
     val koinApplication = startKoin {
@@ -70,7 +71,7 @@ private val coreModule = module {
     factory { GoogleAuthCredentials(get(qualifier("serverId"))) }
     single { SettingsUtil() }
     single { KtorFileTransfer() }
-    single { getHttpClient(get(), get()) }
+    single { getHttpClient(get(), get(), baseLogger.withTag("Http-Client")) }
 
 }
 
