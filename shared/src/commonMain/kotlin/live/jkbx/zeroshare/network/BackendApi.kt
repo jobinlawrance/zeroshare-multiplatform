@@ -5,7 +5,8 @@ import com.russhwolf.settings.Settings
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.HttpTimeoutConfig
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
@@ -15,21 +16,20 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
-import io.ktor.client.request.request
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.di.tokenKey
+import live.jkbx.zeroshare.models.Device
 import live.jkbx.zeroshare.models.Member
+import live.jkbx.zeroshare.models.SSERequest
 import live.jkbx.zeroshare.models.SSEEvent
+import live.jkbx.zeroshare.models.SSEResponse
 import live.jkbx.zeroshare.models.SignedKeyResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -40,8 +40,8 @@ class BackendApi : KoinComponent {
     private val log by injectLogger("BackendAPI")
     private val client by inject<HttpClient>()
 
-    private val baseUrl = "https://zeroshare.jkbx.live"
-//    private val baseUrl = "http://192.168.0.101:4000"
+//        private val baseUrl = "https://zeroshare.jkbx.live"
+    private val baseUrl = "http://localhost:4000"
 
     fun creteNetworkURL(sessionToken: String): String {
         return "$baseUrl/login/$sessionToken"
@@ -70,6 +70,38 @@ class BackendApi : KoinComponent {
             setBody(mapOf("public_key" to publicKey, "device_id" to deviceId))
         }
         return req.body<SignedKeyResponse>()
+    }
+
+    suspend fun getDevices(): List<Device> {
+        val req = client.getWithAuth("$baseUrl/devices")
+        return req.body<List<Device>>()
+    }
+
+    suspend fun receiveMessage(id: String, onReceived: (sseData: SSEResponse) -> Unit) {
+        runCatching {
+            client.sse(
+                urlString = "$baseUrl/device/receive/$id",
+                request = {
+                    header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
+                }
+            ) {
+                while (true) {
+                    incoming.collect { event ->
+                        log.d { "Event from server: ${event.data}" }
+                        val sseData = kJson.decodeFromString<SSEResponse>(event.data ?: "")
+                        onReceived(sseData)
+                    }
+                }
+            }
+        }
+        client.close()
+    }
+
+    suspend fun sendMessage(id: String, sseData: SSERequest): HttpStatusCode {
+        val req = client.postWithAuth("$baseUrl/device/send/$id") {
+            setBody(sseData)
+        }
+        return req.body<HttpStatusCode>()
     }
 
     private fun parseSseToken(data: String): SSEEvent {
@@ -158,6 +190,9 @@ fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClien
 
     val client = HttpClient(engine) {
         expectSuccess = true
+        install(HttpTimeout) {
+            requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
+        }
         install(ContentNegotiation) {
             json(kJson)
         }

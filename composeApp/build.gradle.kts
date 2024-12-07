@@ -54,6 +54,8 @@ kotlin {
             api(libs.ktor.server.core)
             api(libs.ktor.http)
             implementation(libs.ktor.server.call.logging)
+            implementation(libs.tika.core)
+            implementation(libs.okio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

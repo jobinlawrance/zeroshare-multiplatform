@@ -20,8 +20,8 @@ expect fun fromPlatformFile(file: PlatformFile): SocketFileWrapper
 data class FileTransferMetadata(
     val fileName: String,
     val fileSize: Long,
-    val fileHash: String,
-    val transferType: TransferType
+    val mimeType: String,
+    val extension: String?
 )
 
 interface FileTransferListener {

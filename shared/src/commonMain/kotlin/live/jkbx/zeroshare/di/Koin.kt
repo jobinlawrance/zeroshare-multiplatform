@@ -62,7 +62,7 @@ private val coreModule = module {
 
     single<Json> { Json {
         isLenient = true
-        prettyPrint = true
+        prettyPrint = false
         ignoreUnknownKeys = true
     } }
 

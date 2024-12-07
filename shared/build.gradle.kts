@@ -125,10 +125,14 @@ android {
         implementation(libs.androidx.credentials.play.services.auth)
         implementation(libs.googleid)
         implementation(libs.androidx.security.crypto.ktx)
+        implementation(libs.androidx.media3.exoplayer)
+
     }
 
 }
 dependencies {
     implementation(libs.googleid)
     implementation(libs.androidx.security.crypto.ktx)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(project(":composeApp"))
 }

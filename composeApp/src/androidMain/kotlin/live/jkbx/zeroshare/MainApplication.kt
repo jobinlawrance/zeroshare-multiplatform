@@ -11,6 +11,7 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.SharedPreferencesSettings
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.engine.okhttp.OkHttpConfig
 import live.jkbx.zeroshare.di.initKoin
 import live.jkbx.zeroshare.nebula.Nebula
 import live.jkbx.zeroshare.nebula.NebulaAndroidImpl
@@ -25,6 +26,7 @@ import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import java.util.concurrent.TimeUnit
 
 class MainApplication : Application() {
     override fun onCreate() {
@@ -47,7 +49,13 @@ class MainApplication : Application() {
                 SharedPreferencesSettings(get<SharedPreferences>())
             }
             single<HttpClientEngine> {
-                OkHttp.create {}
+                OkHttp.create {
+                    OkHttpConfig().config {
+                        readTimeout(0, TimeUnit.MINUTES)
+                        writeTimeout(0, TimeUnit.MINUTES)
+                        connectTimeout(0, TimeUnit.MINUTES)
+                    }
+                }
 //                CIO.create()
             }
             single<String>(named("serverId")) { getString(live.jkbx.zeroshare.shared.R.string.serverId) }

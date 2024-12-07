@@ -145,7 +145,7 @@ class LoginScreen : Screen, KoinComponent {
                         login.value = true
                     }
                 ) {
-                    Image(painterResource(Res.drawable.search), contentDescription = "Google Login")
+                    Image(painterResource(Res.drawable.search), modifier = Modifier.size(24.dp), contentDescription = "Google Login")
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(text = "Login with Google")
                 }

@@ -53,7 +53,7 @@ class JavaSocketFileTransfer(
 
                     // Verify and process file
                     val hash = calculateFileHash(receivedBytes)
-                    if (hash == metadata.fileHash) {
+                    if (hash == metadata.mimeType) {
                         onFileReceived(metadata, receivedBytes)
                         // Send success acknowledgement
                         outputStream.writeUTF(TransferStatus.SUCCESS.name)
@@ -90,8 +90,8 @@ class JavaSocketFileTransfer(
                 val metadata = FileTransferMetadata(
                     fileName = fileWrapper.getName(),
                     fileSize = fileBytes.size.toLong(),
-                    fileHash = calculateFileHash(fileBytes),
-                    transferType = TransferType.UPLOAD
+                    mimeType = calculateFileHash(fileBytes),
+                    extension = null
                 )
 
                 // Send metadata
