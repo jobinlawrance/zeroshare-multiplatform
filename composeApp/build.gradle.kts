@@ -56,6 +56,11 @@ kotlin {
             implementation(libs.ktor.server.call.logging)
             implementation(libs.tika.core)
             implementation(libs.okio)
+            implementation(project(":rpc-common"))
+            implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.4.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client:0.4.0")
+            implementation(libs.kotlinx.rpc.krpc.serialization.json)
+
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

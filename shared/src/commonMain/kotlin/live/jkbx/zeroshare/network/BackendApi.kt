@@ -12,6 +12,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.plugins.sse.sse
+import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -27,9 +28,9 @@ import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.Device
 import live.jkbx.zeroshare.models.Member
-import live.jkbx.zeroshare.models.SSERequest
+
 import live.jkbx.zeroshare.models.SSEEvent
-import live.jkbx.zeroshare.models.SSEResponse
+
 import live.jkbx.zeroshare.models.SignedKeyResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -77,32 +78,32 @@ class BackendApi : KoinComponent {
         return req.body<List<Device>>()
     }
 
-    suspend fun receiveMessage(id: String, onReceived: (sseData: SSEResponse) -> Unit) {
-        runCatching {
-            client.sse(
-                urlString = "$baseUrl/device/receive/$id",
-                request = {
-                    header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
-                }
-            ) {
-                while (true) {
-                    incoming.collect { event ->
-                        log.d { "Event from server: ${event.data}" }
-                        val sseData = kJson.decodeFromString<SSEResponse>(event.data ?: "")
-                        onReceived(sseData)
-                    }
-                }
-            }
-        }
-        client.close()
-    }
+//    suspend fun receiveMessage(id: String, onReceived: (sseData: SSEResponse) -> Unit) {
+//        runCatching {
+//            client.sse(
+//                urlString = "$baseUrl/device/receive/$id",
+//                request = {
+//                    header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
+//                }
+//            ) {
+//                while (true) {
+//                    incoming.collect { event ->
+//                        log.d { "Event from server: ${event.data}" }
+//                        val sseData = kJson.decodeFromString<SSEResponse>(event.data ?: "")
+//                        onReceived(sseData)
+//                    }
+//                }
+//            }
+//        }
+//        client.close()
+//    }
 
-    suspend fun sendMessage(id: String, sseData: SSERequest): HttpStatusCode {
-        val req = client.postWithAuth("$baseUrl/device/send/$id") {
-            setBody(sseData)
-        }
-        return req.body<HttpStatusCode>()
-    }
+//    suspend fun sendMessage(id: String, sseData: SSERequest): HttpStatusCode {
+//        val req = client.postWithAuth("$baseUrl/device/send/$id") {
+//            setBody(sseData)
+//        }
+//        return req.body<HttpStatusCode>()
+//    }
 
     private fun parseSseToken(data: String): SSEEvent {
         val event = kJson.decodeFromString<SSEEvent>(data)
@@ -220,6 +221,7 @@ fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClien
 //
 //        }
 //        install(contentTypePlugin)
+        install(WebSockets)
     }
     return client
 }

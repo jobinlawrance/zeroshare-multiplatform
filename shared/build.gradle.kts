@@ -68,6 +68,7 @@ kotlin {
             api(libs.kotlin.stdlib)
             implementation(libs.ktor.client.core) // For the Ktor client
             api(libs.ktor.client.socket)
+
         }
 
         iosMain.dependencies {
@@ -94,8 +95,6 @@ kotlin {
         }
     }
 }
-
-
 
 android {
     namespace = "live.jkbx.zeroshare.shared"

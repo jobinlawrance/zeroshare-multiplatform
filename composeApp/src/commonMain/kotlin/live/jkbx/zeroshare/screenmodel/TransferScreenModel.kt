@@ -6,14 +6,15 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.models.Device
-import live.jkbx.zeroshare.models.SSERequest
-import live.jkbx.zeroshare.models.SSEType
 import live.jkbx.zeroshare.network.BackendApi
+import live.jkbx.zeroshare.rpc.common.SSERequest
+import live.jkbx.zeroshare.rpc.common.SSEType
 import live.jkbx.zeroshare.socket.FileTransferMetadata
 import live.jkbx.zeroshare.utils.uniqueDeviceId
 import org.koin.core.component.KoinComponent
@@ -25,6 +26,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val backendApi by inject<BackendApi>()
     private val json by inject<Json>()
+    private val rpcClient = RpcClient()
 
     val devices = mutableStateOf<List<Device>>(emptyList())
     val defaultDevice = mutableStateOf<Device?>(null)
@@ -43,23 +45,23 @@ class TransferScreenModel : ScreenModel, KoinComponent {
 
             log.d { "Device id is $id" }
 
-            //TODO - Start a SSE event here to listen to incoming files
-            backendApi.receiveMessage(id) { sseData ->
-                log.d { "Received message $sseData" }
-                when (sseData.type) {
-                    SSEType.DOWNLOAD_REQUEST -> {
-                        receiver.value = sseData.device
-                        receiveRequest.value = json.decodeFromJsonElement(
-                            FileTransferMetadata.serializer(),
-                            sseData.data
-                        )
-                    }
-
-                    SSEType.ACKNOWLEDGEMENT -> {
-
-                    }
-                }
-            }
+//            //TODO - Start a SSE event here to listen to incoming files
+//            backendApi.receiveMessage(id) { sseData ->
+//                log.d { "Received message $sseData" }
+//                when (sseData.type) {
+//                    SSEType.DOWNLOAD_REQUEST -> {
+//                        receiver.value = sseData.device
+//                        receiveRequest.value = json.decodeFromJsonElement(
+//                            FileTransferMetadata.serializer(),
+//                            sseData.data
+//                        )
+//                    }
+//
+//                    SSEType.ACKNOWLEDGEMENT -> {
+//
+//                    }
+//                }
+//            }
         }
     }
 
@@ -68,11 +70,15 @@ class TransferScreenModel : ScreenModel, KoinComponent {
         val sseRequest = SSERequest(
             type = SSEType.DOWNLOAD_REQUEST,
             data = json.encodeToJsonElement(fileMetadata),
-            uniqueId = uniqueDeviceId()
+            uniqueId = uniqueDeviceId(),
+            deviceId = id,
+            senderId = uniqueDeviceId()
         )
 
         screenModelScope.launch {
-            backendApi.sendMessage(id, sseRequest)
+            rpcClient.sendMessage(flowOf(sseRequest)).collect {
+                log.d { "Received response ${it.toString()}" }
+            }
         }
     }
 

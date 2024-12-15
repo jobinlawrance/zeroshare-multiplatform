@@ -27,10 +27,10 @@ koin = "4.0.0"
 koin-compose = "4.0.0"
 kermit = "2.0.4"
 kotlinxSerializationJson = "1.7.3"
-logbackClassic = "1.4.6"
+logbackClassic = "1.4.14"
 media3Exoplayer = "1.5.0"
-multiplatformSettings = "1.2.0"
-ktor = "3.0.1"
+multiplatformSettings = "1.3.0"
+ktor = "3.0.2"
 okio = "3.9.1"
 okhttp = "4.12.0"
 retrofit = "2.11.0"
@@ -41,6 +41,8 @@ skie = "0.9.3"
 googleid = "1.1.1"
 workRuntime = "2.10.0"
 securityCryptoKtx = "1.0.0"
+kotlinx-rpc-version = "0.4.0"
+shadow = "8.1.1"
 
 [libraries]
 adapter-rxjava = { module = "com.squareup.retrofit2:adapter-rxjava", version.ref = "retrofit" }
@@ -78,6 +80,8 @@ koin-androidx-compose = { module = "io.insert-koin:koin-androidx-compose", versi
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin-compose" }
 koin-composeVM = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin-compose" }
+kotlinx-rpc-krpc-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-serialization-json", version.ref = "kotlinx-rpc-version" }
+kotlinx-rpc-krpc-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-server", version.ref = "kotlinx-rpc-version" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
@@ -113,6 +117,12 @@ voyager-koin = { module = "cafe.adriel.voyager:voyager-koin", version.ref = "voy
 touchlab-skie-annotations = { module = "co.touchlab.skie:configuration-annotations", version.ref = "skie" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
 androidx-security-crypto-ktx = { group = "androidx.security", name = "security-crypto", version.ref = "securityCryptoKtx" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth-jvm", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt-jvm", version.ref = "ktor" }
+ktor-server-cors = { module = "io.ktor:ktor-server-cors-jvm", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+kotlinx-rpc-krpc-ktor-server = { module = "org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-server", version.ref = "kotlinx-rpc-version" }
 
 
 [plugins]
@@ -123,6 +133,9 @@ composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "k
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 skie = { id = "co.touchlab.skie", version.ref = "skie" }
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+kotlinx-rpc-plugin = { id = "org.jetbrains.kotlinx.rpc.plugin", version.ref = "kotlinx-rpc-version" }
+shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
 
 [bundles]
 ktor-common = ["ktor-client-core", "ktor-client-logging", "ktor-client-serialization", "ktor-client-contentNegotiation", "ktor-client-auth", "ktor-client-socket"]
