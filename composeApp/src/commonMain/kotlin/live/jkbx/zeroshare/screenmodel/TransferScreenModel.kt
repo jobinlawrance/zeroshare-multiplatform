@@ -77,7 +77,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
 
         screenModelScope.launch {
             rpcClient.sendMessage(flowOf(sseRequest)).collect {
-                log.d { "Received response ${it.toString()}" }
+                log.d { "Received response $it" }
             }
         }
     }

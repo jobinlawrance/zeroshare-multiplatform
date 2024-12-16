@@ -17,6 +17,9 @@ dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.4.0")
     implementation(libs.jedis)
+    implementation("io.lettuce:lettuce-core:6.5.1.RELEASE")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.reactive)
 }
 
 tasks.test {
