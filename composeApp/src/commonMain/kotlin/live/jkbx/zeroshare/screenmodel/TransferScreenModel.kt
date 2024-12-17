@@ -3,10 +3,8 @@ package live.jkbx.zeroshare.screenmodel
 import androidx.compose.runtime.mutableStateOf
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -23,7 +21,6 @@ import java.io.File
 
 class TransferScreenModel : ScreenModel, KoinComponent {
     private val log by injectLogger("TransferScreenModel")
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val backendApi by inject<BackendApi>()
     private val json by inject<Json>()
     private val rpcClient = RpcClient()
@@ -31,7 +28,8 @@ class TransferScreenModel : ScreenModel, KoinComponent {
     val devices = mutableStateOf<List<Device>>(emptyList())
     val defaultDevice = mutableStateOf<Device?>(null)
     val receiveRequest = mutableStateOf<FileTransferMetadata?>(null)
-    val receiver = mutableStateOf<Device?>(null)
+
+    private val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
 
     init {
         screenModelScope.launch {
@@ -44,24 +42,20 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             val id = _devices.first { it.deviceId == uniqueDeviceId() }.iD
 
             log.d { "Device id is $id" }
-
-//            //TODO - Start a SSE event here to listen to incoming files
-//            backendApi.receiveMessage(id) { sseData ->
-//                log.d { "Received message $sseData" }
-//                when (sseData.type) {
-//                    SSEType.DOWNLOAD_REQUEST -> {
-//                        receiver.value = sseData.device
-//                        receiveRequest.value = json.decodeFromJsonElement(
-//                            FileTransferMetadata.serializer(),
-//                            sseData.data
-//                        )
-//                    }
-//
-//                    SSEType.ACKNOWLEDGEMENT -> {
-//
-//                    }
-//                }
-//            }
+            val device = devices.value.first { it.deviceId == uniqueDeviceId() }
+            val _device = live.jkbx.zeroshare.rpc.common.Device(
+                created = device.created,
+                deviceId = device.deviceId,
+                iD = device.iD,
+                ipAddress = device.ipAddress,
+                machineName = device.machineName,
+                platform = device.platform,
+                updated = device.updated,
+                userId = device.userId
+            )
+            rpcClient.subscribe(requestChannel.consumeAsFlow(), _device).collect {
+                log.d { "Received response $it" }
+            }
         }
     }
 
@@ -76,9 +70,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
         )
 
         screenModelScope.launch {
-            rpcClient.sendMessage(flowOf(sseRequest)).collect {
-                log.d { "Received response $it" }
-            }
+            requestChannel.send(sseRequest)
         }
     }
 

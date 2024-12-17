@@ -50,5 +50,5 @@ data class Device(
 
 @Rpc
 interface DeviceStream: RemoteService {
-    suspend fun subscribe(request: Flow<SSERequest>): Flow<SSEResponse>
+    suspend fun subscribe(request: Flow<SSERequest>, device: Device): Flow<SSEResponse>
 }

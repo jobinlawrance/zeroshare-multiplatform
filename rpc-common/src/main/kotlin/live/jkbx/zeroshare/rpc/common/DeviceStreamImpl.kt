@@ -1,9 +1,8 @@
 package live.jkbx.zeroshare.rpc.common
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.CoroutineContext
@@ -12,42 +11,31 @@ class DeviceStreamImpl(override val coroutineContext: CoroutineContext) : Device
     private val redisPubSub = RedisPubSub()
     private val json = Json { ignoreUnknownKeys = true }
 
-    override suspend fun subscribe(request: Flow<SSERequest>): Flow<SSEResponse> {
-        val channel = Channel<SSEResponse>(Channel.UNLIMITED)
+    override suspend fun subscribe(request: Flow<SSERequest>, device: Device): Flow<SSEResponse> = channelFlow {
         var deviceId: String? = null
-
+        if (deviceId == null) {
+            deviceId = device.deviceId
+            redisPubSub.subscribe(deviceId) { message ->
+                try {
+                    launch(Dispatchers.IO) {
+                        send(json.decodeFromString(SSEResponse.serializer(), message))
+                    }
+                } catch (e: Exception) {
+                    println("Error sending to channel: ${e.message}")
+                }
+            }
+        }
         try {
             request.collect { sseRequest ->
-                if (deviceId == null) {
-                    deviceId = sseRequest.senderId
-                    redisPubSub.subscribe(sseRequest.deviceId) { message ->
-                        try {
-                            launch(Dispatchers.IO) {
-                                channel.send(json.decodeFromString(SSEResponse.serializer(), message))
-                            }
-                        } catch (e: Exception) {
-                            println("Error sending to channel: ${e.message}")
-                        }
-                    }
 
-                }
                 try {
                     val sseResponse = SSEResponse(
-                        SSEType.ACKNOWLEDGEMENT,
-                        sseRequest.data,
-                        Device(
-                            0,
-                            sseRequest.deviceId,
-                            sseRequest.senderId,
-                            sseRequest.deviceId,
-                            "Unknown",
-                            "Unknown",
-                            0,
-                            sseRequest.senderId
-                        )
+                        type = SSEType.ACKNOWLEDGEMENT,
+                        data = sseRequest.data,
+                        device = device
                     )
                     redisPubSub.publish(
-                        sseRequest.deviceId,
+                        deviceId,
                         json.encodeToString(SSEResponse.serializer(), sseResponse)
                     )
                 } catch (e: Exception) {
@@ -60,6 +48,5 @@ class DeviceStreamImpl(override val coroutineContext: CoroutineContext) : Device
 //            channel.close()
         }
 
-        return channel.consumeAsFlow()
     }
 }
