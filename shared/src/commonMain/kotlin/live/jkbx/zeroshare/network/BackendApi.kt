@@ -41,8 +41,8 @@ class BackendApi : KoinComponent {
     private val log by injectLogger("BackendAPI")
     private val client by inject<HttpClient>()
 
-//        private val baseUrl = "https://zeroshare.jkbx.live"
-    private val baseUrl = "http://localhost:4000"
+        private val baseUrl = "https://zeroshare.jkbx.live"
+//    private val baseUrl = "http://localhost:4000"
 
     fun creteNetworkURL(sessionToken: String): String {
         return "$baseUrl/login/$sessionToken"

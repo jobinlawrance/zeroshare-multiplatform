@@ -14,7 +14,7 @@ class DeviceStreamImpl(override val coroutineContext: CoroutineContext) : Device
     override suspend fun subscribe(request: Flow<SSERequest>, device: Device): Flow<SSEResponse> = channelFlow {
         var deviceId: String? = null
         if (deviceId == null) {
-            deviceId = device.deviceId
+            deviceId = device.iD
             redisPubSub.subscribe(deviceId) { message ->
                 try {
                     launch(Dispatchers.IO) {
@@ -24,6 +24,7 @@ class DeviceStreamImpl(override val coroutineContext: CoroutineContext) : Device
                     println("Error sending to channel: ${e.message}")
                 }
             }
+            println("Subscribing to $deviceId")
         }
         try {
             request.collect { sseRequest ->
@@ -35,9 +36,10 @@ class DeviceStreamImpl(override val coroutineContext: CoroutineContext) : Device
                         device = device
                     )
                     redisPubSub.publish(
-                        deviceId,
+                        sseRequest.deviceId,
                         json.encodeToString(SSEResponse.serializer(), sseResponse)
                     )
+                    println("Published to ${sseRequest.deviceId}")
                 } catch (e: Exception) {
                     println("Error during publish: ${e.message}")
                 }

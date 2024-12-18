@@ -87,6 +87,7 @@ kotlin {
             implementation(libs.adapter.rxjava)
             implementation(libs.okhttp)
             implementation(libs.logging.interceptor)
+            implementation(libs.tika.core)
         }
         getByName("commonMain") {
             dependencies {
@@ -114,6 +115,12 @@ android {
         compose=true
     }
 
+    packaging {
+        resources {
+            excludes += "**/*"
+        }
+    }
+
     dependencies {
         implementation(libs.koin.android)
         implementation(libs.koin.androidx.compose)
@@ -125,7 +132,7 @@ android {
         implementation(libs.googleid)
         implementation(libs.androidx.security.crypto.ktx)
         implementation(libs.androidx.media3.exoplayer)
-
+        implementation(libs.tika.core)
     }
 
 }
@@ -133,5 +140,4 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.androidx.security.crypto.ktx)
     implementation(libs.androidx.media3.exoplayer)
-    implementation(project(":composeApp"))
 }

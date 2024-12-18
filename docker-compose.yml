@@ -1,0 +1,7 @@
+services:
+  zeroshare-krpc:
+    image: ghrc.io/jobinlawrance/zeroshare-multiplatform:1.0.1
+    container_name: zeroshare-krpc
+    ports:
+      - "8080:8080" # Map container port 8080 to host port 8080
+

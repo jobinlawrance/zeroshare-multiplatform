@@ -59,7 +59,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
         }
     }
 
-    fun sendToDevice(id: String, file: File, fileMetadata: FileTransferMetadata) {
+    fun sendToDevice(id: String, fileMetadata: FileTransferMetadata) {
 
         val sseRequest = SSERequest(
             type = SSEType.DOWNLOAD_REQUEST,

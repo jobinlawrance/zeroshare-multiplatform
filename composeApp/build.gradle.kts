@@ -54,7 +54,6 @@ kotlin {
             api(libs.ktor.server.core)
             api(libs.ktor.http)
             implementation(libs.ktor.server.call.logging)
-            implementation(libs.tika.core)
             implementation(libs.okio)
             implementation(project(":rpc-common"))
             implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.4.0")
@@ -87,6 +86,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*"
         }
     }
     buildTypes {

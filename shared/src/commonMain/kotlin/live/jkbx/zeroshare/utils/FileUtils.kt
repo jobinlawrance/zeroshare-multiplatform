@@ -1,5 +1,7 @@
 package live.jkbx.zeroshare.utils
 
+import io.github.vinceglb.filekit.core.PlatformFile
+import live.jkbx.zeroshare.socket.FileTransferMetadata
 import kotlin.math.round
 import kotlin.math.roundToInt
 
@@ -133,5 +135,6 @@ val excelMimeTypes = listOf(
     "application/wps-office.xlsx"                  // WPS Office Excel format
 )
 
+expect fun PlatformFile.toFileMetaData(): FileTransferMetadata
 
-
+expect fun getKoinContext(): Any

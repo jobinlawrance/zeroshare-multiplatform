@@ -1,6 +1,5 @@
 package live.jkbx.zeroshare.screens
 
-import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
@@ -145,12 +143,6 @@ class NebulaScreen : Screen, KoinComponent {
                                     )
                                 }
                             }
-
-                            // Add a vertical scrollbar that follows the LazyColumn scroll state
-                            VerticalScrollbar(
-                                adapter = rememberScrollbarAdapter(listState),
-                                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().padding(vertical = 8.dp).padding(end = 8.dp)
-                            )
                         }
                     }
                     if (viewModel.downloadMessage.value.isNotEmpty()) {

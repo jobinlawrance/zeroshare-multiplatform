@@ -71,12 +71,8 @@ import live.jkbx.zeroshare.utils.convertByteSize
 import live.jkbx.zeroshare.utils.databaseMimeTypes
 import live.jkbx.zeroshare.utils.documentMimeTypes
 import live.jkbx.zeroshare.utils.excelMimeTypes
+import live.jkbx.zeroshare.utils.toFileMetaData
 import live.jkbx.zeroshare.utils.uniqueDeviceId
-import okio.Buffer
-import okio.Source
-import okio.Timeout
-import org.apache.tika.Tika
-import org.apache.tika.config.TikaConfig
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.imageResource
 import org.koin.core.component.KoinComponent
@@ -117,7 +113,6 @@ class TransferScreen : KoinComponent, Screen {
         var showDialog by remember { mutableStateOf(false) }
         var selectedOption by remember { mutableStateOf<DropdownItem?>(null) }
         var selectedFileMeta by remember { mutableStateOf<FileTransferMetadata?>(null) }
-        var selectedFile by remember { mutableStateOf<File?>(null) }
 
         val singleFilePicker = rememberFilePickerLauncher(
             type = PickerType.File(),
@@ -125,23 +120,8 @@ class TransferScreen : KoinComponent, Screen {
             mode = PickerMode.Single,
             initialDirectory = directory?.path,
             onResult = { platformFile ->
-                log.d { "file: ${platformFile!!.file}" }
-                var file = platformFile!!.file
-                val tikka = Tika()
-                val mimeType = tikka.detect(file)
-                val mimeTypes = TikaConfig.getDefaultConfig().mimeRepository
-                val mimeTypeObj = mimeTypes.forName(mimeType)
-
-                val fileMetadata = FileTransferMetadata(
-                    fileName = file.name,
-                    fileSize = file.length(),
-                    mimeType = mimeType,
-                    extension = mimeTypeObj.extensions.firstOrNull(),
-                )
-
+                val fileMetadata = platformFile!!.toFileMetaData()
                 selectedFileMeta = fileMetadata
-                selectedFile = file
-
                 log.d {
                     "Mime type - ${
                         json.encodeToString(
@@ -233,7 +213,7 @@ class TransferScreen : KoinComponent, Screen {
                         enabled = selectedFileMeta != null && selectedOption != null,
                         onClick = {
                             scope.launch {
-                                transferVM.sendToDevice(selectedOption!!.id, selectedFile!!, selectedFileMeta!!)
+                                transferVM.sendToDevice(selectedOption!!.id, selectedFileMeta!!)
                             }
                         }) {
                         Text("Send")
@@ -424,31 +404,6 @@ suspend fun PointerInputScope.detectHover(
             PointerEventType.Enter -> onEnter()
             PointerEventType.Exit -> onExit()
         }
-    }
-}
-
-internal class FileChannelSource(private val channel: FileChannel, timeout: Timeout) : Source {
-    private val timeout: Timeout = timeout
-
-    private var position = channel.position()
-
-    @Throws(IOException::class)
-    override fun read(sink: Buffer, byteCount: Long): Long {
-        check(channel.isOpen) { "closed" }
-        if (position == channel.size()) return -1L
-
-        val read = channel.transferTo(position, byteCount, sink)
-        position += read
-        return read
-    }
-
-    override fun timeout(): Timeout {
-        return timeout
-    }
-
-    @Throws(IOException::class)
-    override fun close() {
-        channel.close()
     }
 }
 

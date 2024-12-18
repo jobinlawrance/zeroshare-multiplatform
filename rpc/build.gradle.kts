@@ -38,3 +38,29 @@ tasks.test {
 kotlin {
     jvmToolchain(21)
 }
+
+application {
+    mainClass = "live.jkbx.zeroshare.rpc.ApplicationKt"
+}
+
+//ktor {
+//
+//    docker {
+//        jreVersion = JavaVersion.VERSION_21
+//        localImageName = "zeroshare-krpc"
+//        imageTag = "1.0.0"
+//    }
+//}
+
+jib {
+    from {
+        image = "eclipse-temurin:21-jdk"
+    }
+    to {
+        image = "jobinlawrance/zeroshare-krpc:1.0.10"
+    }
+
+    container {
+        mainClass = "live.jkbx.zeroshare.rpc.ApplicationKt"
+    }
+}

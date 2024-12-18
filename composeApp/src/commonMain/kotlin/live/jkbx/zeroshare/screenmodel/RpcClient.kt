@@ -48,7 +48,8 @@ class RpcClient : KoinComponent {
 
     private suspend fun getRpcClient(): KtorRPCClient {
         return client.rpc {
-            url("ws://localhost:8080/stream")
+//            url("ws://localhost:8080/stream")
+            url("wss://zeroshare-krpc.jkbx.live/stream")
             rpcConfig {
                 serialization {
                     json()

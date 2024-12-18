@@ -7,4 +7,7 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.skie) apply false
+    alias(libs.plugins.ktor) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.kotlinx.rpc.plugin) apply false
 }
