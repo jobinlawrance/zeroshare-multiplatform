@@ -7,6 +7,12 @@ import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.russhwolf.settings.Settings
+import io.ktor.client.*
+import io.ktor.http.*
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v3_0.client.KtorClientTracing
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+import io.opentelemetry.semconv.ResourceAttributes
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
@@ -53,4 +59,36 @@ actual fun getPlatform(): Platform = AndroidPlatform()
 actual fun uniqueDeviceId(): String {
     val context by inject<Context>(Context::class.java)
     return AndroidSettings.Secure.getString(context.contentResolver, AndroidSettings.Secure.ANDROID_ID)
+}
+
+actual fun HttpClientConfig<*>.installOpenTelemetry() {
+    val openTelemetry = getOpenTelemetry(serviceName = "ktor-client-android")
+
+    install(KtorClientTracing) {
+        setOpenTelemetry(openTelemetry)
+
+        emitExperimentalHttpClientMetrics()
+
+        knownMethods(HttpMethod.DefaultMethods)
+        capturedRequestHeaders(HttpHeaders.Accept)
+        capturedResponseHeaders(HttpHeaders.ContentType)
+
+        attributeExtractor {
+            onStart {
+                attributes.put("start-time", System.currentTimeMillis())
+            }
+            onEnd {
+                attributes.put("end-time", System.currentTimeMillis())
+            }
+        }
+    }
+}
+
+fun getOpenTelemetry(serviceName: String): OpenTelemetry {
+    return AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { oldResource, _ ->
+        oldResource.toBuilder()
+            .putAll(oldResource.attributes)
+            .put(ResourceAttributes.SERVICE_NAME, serviceName)
+            .build()
+    }.build().openTelemetrySdk
 }

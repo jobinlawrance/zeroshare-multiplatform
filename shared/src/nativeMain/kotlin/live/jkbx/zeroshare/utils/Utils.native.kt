@@ -1,6 +1,7 @@
 package live.jkbx.zeroshare.utils
 
 import androidx.compose.runtime.Composable
+import io.ktor.client.*
 import live.jkbx.zeroshare.models.SSEEvent
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
@@ -39,4 +40,8 @@ actual fun getPlatform(): Platform = IOSPlatform()
 
 actual fun uniqueDeviceId(): String {
     return UIDevice().identifierForVendor?.UUIDString!!
+}
+
+actual fun HttpClientConfig<*>.installOpenTelemetry() {
+
 }

@@ -1,6 +1,7 @@
 package live.jkbx.zeroshare.utils
 
 import androidx.compose.runtime.Composable
+import io.ktor.client.*
 import live.jkbx.zeroshare.models.SSEEvent
 
 expect fun openUrlInBrowser(url: String)
@@ -18,3 +19,5 @@ interface Platform {
 expect fun getPlatform(): Platform
 
 expect fun uniqueDeviceId(): String
+
+expect fun HttpClientConfig<*>.installOpenTelemetry()

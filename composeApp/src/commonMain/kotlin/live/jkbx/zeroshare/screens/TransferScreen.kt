@@ -114,6 +114,10 @@ class TransferScreen : KoinComponent, Screen {
         var selectedOption by remember { mutableStateOf<DropdownItem?>(null) }
         var selectedFileMeta by remember { mutableStateOf<FileTransferMetadata?>(null) }
 
+        var showIncomingDialog by remember { transferVM.incomingFileDialog }
+        var incomingFile by remember { transferVM.incomingFile }
+        var incomingDevice by remember { transferVM.incomingDevice }
+
         val singleFilePicker = rememberFilePickerLauncher(
             type = PickerType.File(),
             title = "Single file picker",
@@ -256,6 +260,20 @@ class TransferScreen : KoinComponent, Screen {
                                 )
                             }
                         }
+                    }
+                }
+            }
+
+            if (showIncomingDialog) {
+                BasicAlertDialog(onDismissRequest = { transferVM.incomingFileDialog.value = false }) {
+                    Surface(
+                        modifier = Modifier.wrapContentWidth().wrapContentHeight(),
+                        shape = MaterialTheme.shapes.large,
+                        tonalElevation = AlertDialogDefaults.TonalElevation,
+                        color = Color(25, 25, 25), // Light background color
+                        contentColor = Color(0xFF000000) // Dark text color
+                    ) {
+
                     }
                 }
             }

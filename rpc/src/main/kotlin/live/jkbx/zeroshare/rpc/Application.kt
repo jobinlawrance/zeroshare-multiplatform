@@ -16,4 +16,5 @@ fun Application.module() {
     configureFrameworks()
     configureMonitoring()
     configureRouting()
+    configureTelemetry()
 }

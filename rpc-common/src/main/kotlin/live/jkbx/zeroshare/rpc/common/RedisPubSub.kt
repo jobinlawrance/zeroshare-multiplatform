@@ -10,7 +10,7 @@ import kotlinx.coroutines.withContext
 @OptIn(ExperimentalLettuceCoroutinesApi::class)
 class RedisPubSub {
 
-    private val uri = RedisURI.Builder.redis("redis")
+    private val uri = RedisURI.Builder.redis("localhost", 6379)
         .withPassword("testpass".toCharArray())
         .withDatabase(0)
         .build();

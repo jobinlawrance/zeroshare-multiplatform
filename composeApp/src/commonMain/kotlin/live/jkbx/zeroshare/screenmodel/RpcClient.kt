@@ -1,7 +1,10 @@
 package live.jkbx.zeroshare.screenmodel
 
 import io.ktor.client.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
+import io.ktor.http.*
+import io.opentelemetry.instrumentation.ktor.v3_0.client.KtorClientTracing
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -20,13 +23,13 @@ import live.jkbx.zeroshare.rpc.common.SSERequest
 import live.jkbx.zeroshare.rpc.common.SSEResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import utils.getOpenTelemetry
 
 class RpcClient : KoinComponent {
-    val client by inject<HttpClient>()
+    private val client by inject<HttpClient>()
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
-    val coroutineScope = CoroutineScope(Dispatchers.Default)
-
-    fun subscribe(request: Flow<SSERequest>, device: Device): Flow<SSEResponse>  = flow {
+    fun subscribe(request: Flow<SSERequest>, device: Device): Flow<SSEResponse> = flow {
         val channel = Channel<SSEResponse>(Channel.UNLIMITED)
         coroutineScope.launch {
                 try {
@@ -47,6 +50,8 @@ class RpcClient : KoinComponent {
     }
 
     private suspend fun getRpcClient(): KtorRPCClient {
+        val openTelemetry = getOpenTelemetry(serviceName = "krpc-client")
+
         return client.rpc {
 //            url("ws://localhost:8080/stream")
             url("wss://zeroshare-krpc.jkbx.live/stream")

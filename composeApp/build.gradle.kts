@@ -30,8 +30,8 @@ kotlin {
             implementation(libs.androidx.work.runtime)
             implementation(libs.androidx.work.runtime.ktx)
             implementation(libs.androidx.security.crypto.ktx)
-            implementation ("com.github.tony19:logback-android:3.0.0")
-
+            implementation (libs.logback.android)
+            implementation(libs.ktor.client.core)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -56,9 +56,14 @@ kotlin {
             implementation(libs.ktor.server.call.logging)
             implementation(libs.okio)
             implementation(project(":rpc-common"))
-            implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.4.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-ktor-client:0.4.0")
+            implementation(libs.kotlinx.rpc.krpc.client)
+            implementation(libs.kotlinx.rpc.krpc.ktor.client)
             implementation(libs.kotlinx.rpc.krpc.serialization.json)
+
+            implementation(libs.opentelemetry.sdk.extension.autoconfigure)
+            implementation(libs.opentelemetry.exporter.otlp)
+            implementation(libs.opentelemetry.semconv)
+            implementation(libs.opentelemetry.ktor)
 
         }
         desktopMain.dependencies {

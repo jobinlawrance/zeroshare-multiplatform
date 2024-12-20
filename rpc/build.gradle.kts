@@ -30,6 +30,8 @@ dependencies {
 
     implementation(libs.jedis)
     implementation(project(":rpc-common"))
+
+    implementation(libs.opentelemetry.ktor)
 }
 
 tasks.test {
@@ -43,15 +45,6 @@ application {
     mainClass = "live.jkbx.zeroshare.rpc.ApplicationKt"
 }
 
-//ktor {
-//
-//    docker {
-//        jreVersion = JavaVersion.VERSION_21
-//        localImageName = "zeroshare-krpc"
-//        imageTag = "1.0.0"
-//    }
-//}
-
 jib {
     from {
         image = "eclipse-temurin:21-jdk"
@@ -63,4 +56,9 @@ jib {
     container {
         mainClass = "live.jkbx.zeroshare.rpc.ApplicationKt"
     }
+}
+
+tasks.withType<JavaExec> {
+    environment("OTEL_METRICS_EXPORTER", "none")
+    environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317/")
 }

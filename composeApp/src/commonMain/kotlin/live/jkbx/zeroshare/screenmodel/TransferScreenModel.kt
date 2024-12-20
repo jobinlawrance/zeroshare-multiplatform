@@ -29,6 +29,10 @@ class TransferScreenModel : ScreenModel, KoinComponent {
     val defaultDevice = mutableStateOf<Device?>(null)
     val receiveRequest = mutableStateOf<FileTransferMetadata?>(null)
 
+    val incomingFileDialog = mutableStateOf(false)
+    val incomingFile = mutableStateOf<FileTransferMetadata?>(null)
+    val incomingDevice = mutableStateOf<live.jkbx.zeroshare.rpc.common.Device?>(null)
+
     private val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
 
     init {
@@ -55,6 +59,9 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             )
             rpcClient.subscribe(requestChannel.consumeAsFlow(), _device).collect {
                 log.d { "Received response $it" }
+                incomingFileDialog.value = true
+                incomingFile.value = json.decodeFromJsonElement(FileTransferMetadata.serializer(), it.data)
+                incomingDevice.value = it.device
             }
         }
     }

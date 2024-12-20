@@ -5,6 +5,12 @@ import androidx.compose.runtime.LaunchedEffect
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.get
+import io.ktor.client.*
+import io.ktor.http.*
+import io.opentelemetry.api.OpenTelemetry
+import io.opentelemetry.instrumentation.ktor.v3_0.client.KtorClientTracing
+import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
+import io.opentelemetry.semconv.ResourceAttributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.di.tokenKey
@@ -64,4 +70,36 @@ actual fun uniqueDeviceId(): String {
         return uuid
     }
     return deviceId
+}
+
+actual fun HttpClientConfig<*>.installOpenTelemetry() {
+    val openTelemetry = getOpenTelemetry(serviceName = "ktor-client-jvm")
+
+    install(KtorClientTracing) {
+        setOpenTelemetry(openTelemetry)
+
+        emitExperimentalHttpClientMetrics()
+
+        knownMethods(HttpMethod.DefaultMethods)
+        capturedRequestHeaders(HttpHeaders.Accept)
+        capturedResponseHeaders(HttpHeaders.ContentType)
+
+        attributeExtractor {
+            onStart {
+                attributes.put("start-time", System.currentTimeMillis())
+            }
+            onEnd {
+                attributes.put("end-time", System.currentTimeMillis())
+            }
+        }
+    }
+}
+
+fun getOpenTelemetry(serviceName: String): OpenTelemetry {
+    return AutoConfiguredOpenTelemetrySdk.builder().addResourceCustomizer { oldResource, _ ->
+        oldResource.toBuilder()
+            .putAll(oldResource.attributes)
+            .put(ResourceAttributes.SERVICE_NAME, serviceName)
+            .build()
+    }.build().openTelemetrySdk
 }

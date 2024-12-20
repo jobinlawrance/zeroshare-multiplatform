@@ -27,6 +27,7 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import java.util.concurrent.TimeUnit
+import io.ktor.client.plugins.api.*
 
 class MainApplication : Application() {
     override fun onCreate() {

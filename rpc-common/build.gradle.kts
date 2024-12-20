@@ -15,11 +15,15 @@ repositories {
 
 dependencies {
     implementation(libs.ktor.serialization.kotlinx.json)
-    implementation("org.jetbrains.kotlinx:kotlinx-rpc-krpc-client:0.4.0")
+    implementation(libs.kotlinx.rpc.krpc.client)
     implementation(libs.jedis)
-    implementation("io.lettuce:lettuce-core:6.5.1.RELEASE")
+    implementation(libs.lettuce.core)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.reactive)
+
+    implementation(libs.opentelemetry.sdk.extension.autoconfigure)
+    implementation(libs.opentelemetry.exporter.otlp)
+    implementation(libs.opentelemetry.semconv)
 }
 
 tasks.test {
@@ -27,4 +31,9 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
+}
+
+tasks.withType<JavaExec> {
+    environment("OTEL_METRICS_EXPORTER", "none")
+    environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317/")
 }

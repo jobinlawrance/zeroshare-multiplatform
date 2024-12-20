@@ -68,7 +68,7 @@ kotlin {
             api(libs.kotlin.stdlib)
             implementation(libs.ktor.client.core) // For the Ktor client
             api(libs.ktor.client.socket)
-
+            implementation(libs.kotlinx.rpc.krpc.ktor.client)
         }
 
         iosMain.dependencies {
@@ -88,6 +88,10 @@ kotlin {
             implementation(libs.okhttp)
             implementation(libs.logging.interceptor)
             implementation(libs.tika.core)
+            implementation(libs.opentelemetry.sdk.extension.autoconfigure)
+            implementation(libs.opentelemetry.exporter.otlp)
+            implementation(libs.opentelemetry.semconv)
+            implementation(libs.opentelemetry.ktor)
         }
         getByName("commonMain") {
             dependencies {
@@ -133,6 +137,10 @@ android {
         implementation(libs.androidx.security.crypto.ktx)
         implementation(libs.androidx.media3.exoplayer)
         implementation(libs.tika.core)
+        implementation(libs.opentelemetry.sdk.extension.autoconfigure)
+        implementation(libs.opentelemetry.exporter.otlp)
+        implementation(libs.opentelemetry.semconv)
+        implementation(libs.opentelemetry.ktor)
     }
 
 }
@@ -140,4 +148,10 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.androidx.security.crypto.ktx)
     implementation(libs.androidx.media3.exoplayer)
+
+}
+
+tasks.withType<JavaExec> {
+    environment("OTEL_METRICS_EXPORTER", "none")
+    environment("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317/")
 }

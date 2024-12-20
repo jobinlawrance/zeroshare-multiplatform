@@ -2,32 +2,31 @@ package live.jkbx.zeroshare.network
 
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.HttpTimeoutConfig
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.plugins.sse.sse
-import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.rpc.krpc.ktor.client.installRPC
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.Device
 import live.jkbx.zeroshare.models.Member
+import live.jkbx.zeroshare.utils.installOpenTelemetry
 
 import live.jkbx.zeroshare.models.SSEEvent
 
@@ -221,7 +220,10 @@ fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClien
 //
 //        }
 //        install(contentTypePlugin)
-        install(WebSockets)
+        installRPC {
+            waitForServices = true
+        }
+        installOpenTelemetry()
     }
     return client
 }
