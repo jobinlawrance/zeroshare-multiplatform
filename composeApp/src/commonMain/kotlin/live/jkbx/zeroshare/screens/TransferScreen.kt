@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -94,9 +95,6 @@ import zeroshare.composeapp.generated.resources.paper_plane
 import zeroshare.composeapp.generated.resources.rar
 import zeroshare.composeapp.generated.resources.spreedsheet
 import zeroshare.composeapp.generated.resources.video
-import java.io.File
-import java.io.IOException
-import java.nio.channels.FileChannel
 import java.util.Locale
 
 
@@ -114,8 +112,8 @@ class TransferScreen : KoinComponent, Screen {
         var selectedOption by remember { mutableStateOf<DropdownItem?>(null) }
         var selectedFileMeta by remember { mutableStateOf<FileTransferMetadata?>(null) }
 
-        var showIncomingDialog by remember { transferVM.incomingFileDialog }
-        var incomingFile by remember { transferVM.incomingFile }
+        val showIncomingDialog by remember { transferVM.incomingFileDialog }
+        val incomingFile by remember { transferVM.incomingFile }
         var incomingDevice by remember { transferVM.incomingDevice }
 
         val singleFilePicker = rememberFilePickerLauncher(
@@ -265,23 +263,8 @@ class TransferScreen : KoinComponent, Screen {
             }
 
             if (showIncomingDialog) {
-                BasicAlertDialog(onDismissRequest = { transferVM.incomingFileDialog.value = false }) {
-                    Surface(
-                        modifier = Modifier.wrapContentWidth().wrapContentHeight(),
-                        shape = MaterialTheme.shapes.large,
-                        tonalElevation = AlertDialogDefaults.TonalElevation,
-                        color = Color(25, 25, 25), // Light background color
-                        contentColor = Color(0xFF000000) // Dark text color
-                    ) {
-
-                    }
-                }
-            }
-
-            transferVM.receiveRequest.value?.let { meta ->
-
                 BasicAlertDialog(onDismissRequest = {
-                    transferVM.receiveRequest.value = null
+                    transferVM.incomingFileDialog.value = false
                 }) {
                     Surface(
                         modifier = Modifier.wrapContentWidth().wrapContentHeight().padding(16.dp),
@@ -299,14 +282,16 @@ class TransferScreen : KoinComponent, Screen {
                                 modifier = Modifier.align(Alignment.CenterHorizontally)
                             )
                             Spacer(modifier = Modifier.size(16.dp))
-                            FileDetails(onClick = {}, meta = meta)
+                            FileDetails(onClick = {}, meta = incomingFile!!)
                             Spacer(modifier = Modifier.size(16.dp))
                             Row {
                                 Box(modifier = Modifier.weight(1f)) {
                                     CircularImageButton(
                                         modifier = Modifier.align(Alignment.Center),
                                         imageRes = Res.drawable.crossed,
-                                        onClick = {},
+                                        onClick = {
+                                            transferVM.incomingFileDialog.value = false
+                                        },
                                         contentDescription = "Decline"
                                     )
 
@@ -316,7 +301,9 @@ class TransferScreen : KoinComponent, Screen {
                                     CircularImageButton(
                                         imageRes = Res.drawable.check_mark,
                                         contentDescription = "Accept",
-                                        onClick = {},
+                                        onClick = {
+                                            transferVM.incomingFileDialog.value = false
+                                        },
                                         modifier = Modifier.align(Alignment.Center)
                                     )
                                 }
@@ -427,7 +414,7 @@ suspend fun PointerInputScope.detectHover(
 
 @Composable
 fun FileDetails(modifier: Modifier = Modifier, onClick: () -> Unit, meta: FileTransferMetadata) {
-    Box(
+    BoxWithConstraints(
         modifier = modifier.padding(16.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(
@@ -439,7 +426,7 @@ fun FileDetails(modifier: Modifier = Modifier, onClick: () -> Unit, meta: FileTr
             })
             .padding(16.dp)
     ) {
-        Row {
+        RowOrColumn {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
@@ -450,8 +437,11 @@ fun FileDetails(modifier: Modifier = Modifier, onClick: () -> Unit, meta: FileTr
                         shape = RoundedCornerShape(12.dp)
                     )
                     .padding(16.dp)
+                    .fillMaxWidthWithPredicate {
+                        maxWidth < maxHeight
+                    }
             ) {
-                Column {
+                Column(modifier = Modifier.align(Alignment.Center)) {
                     val image = when {
                         documentMimeTypes.contains(meta.mimeType) -> Res.drawable.docs
                         compressedFileMimeTypes.contains(meta.mimeType) -> Res.drawable.rar
@@ -468,7 +458,8 @@ fun FileDetails(modifier: Modifier = Modifier, onClick: () -> Unit, meta: FileTr
                     Image(
                         bitmap = imageResource(image),
                         contentDescription = "File",
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(84.dp)
+                            .align(Alignment.CenterHorizontally)
                     )
                     Spacer(modifier = Modifier.size(16.dp))
                     meta.extension?.let {
@@ -491,6 +482,29 @@ fun FileDetails(modifier: Modifier = Modifier, onClick: () -> Unit, meta: FileTr
                     text = "Size: ${meta.fileSize.convertByteSize()}"
                 )
                 Text(fontFamily = FontFamily.Monospace, text = "Type: ${meta.mimeType}")
+            }
+        }
+    }
+}
+
+fun Modifier.fillMaxWidthWithPredicate(predicate: () -> Boolean): Modifier {
+    return if (predicate()) {
+        this.fillMaxWidth()
+    } else this
+}
+
+@Composable
+fun RowOrColumn(content: @Composable () -> Unit) {
+    BoxWithConstraints {
+        println("Max Width: ${maxWidth}")
+        println("Max Height: ${maxHeight}")
+        if (maxWidth > maxHeight) {
+            Row {
+                content()
+            }
+        } else {
+            Column {
+                content()
             }
         }
     }
