@@ -1,5 +1,6 @@
 package live.jkbx.zeroshare.utils
 
+import io.github.vinceglb.filekit.core.PickerType
 import io.github.vinceglb.filekit.core.PlatformFile
 import live.jkbx.zeroshare.socket.FileTransferMetadata
 import kotlin.math.round

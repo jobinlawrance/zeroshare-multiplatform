@@ -8,6 +8,12 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
+data class DownloadResponse(
+    val downloadUrl: String,
+    val fileName: String
+)
+
+@Serializable
 data class SSERequest(
     val deviceId: String,
     val senderId: String,
@@ -19,6 +25,7 @@ data class SSERequest(
 enum class SSEType {
     ACKNOWLEDGEMENT,
     DOWNLOAD_REQUEST,
+    DOWNLOAD_RESPONSE,
 }
 
 @Serializable

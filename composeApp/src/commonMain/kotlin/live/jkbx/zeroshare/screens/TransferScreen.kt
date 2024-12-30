@@ -57,6 +57,7 @@ import io.github.vinceglb.filekit.compose.rememberFilePickerLauncher
 import io.github.vinceglb.filekit.core.PickerMode
 import io.github.vinceglb.filekit.core.PickerType
 import io.github.vinceglb.filekit.core.PlatformDirectory
+import io.github.vinceglb.filekit.core.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -111,6 +112,7 @@ class TransferScreen : KoinComponent, Screen {
         var showDialog by remember { mutableStateOf(false) }
         var selectedOption by remember { mutableStateOf<DropdownItem?>(null) }
         var selectedFileMeta by remember { mutableStateOf<FileTransferMetadata?>(null) }
+        var selectedFile by remember { mutableStateOf<PlatformFile?>(null) }
 
         val showIncomingDialog by remember { transferVM.incomingFileDialog }
         val incomingFile by remember { transferVM.incomingFile }
@@ -124,14 +126,7 @@ class TransferScreen : KoinComponent, Screen {
             onResult = { platformFile ->
                 val fileMetadata = platformFile!!.toFileMetaData()
                 selectedFileMeta = fileMetadata
-                log.d {
-                    "Mime type - ${
-                        json.encodeToString(
-                            FileTransferMetadata.serializer(),
-                            fileMetadata
-                        )
-                    }"
-                }
+                selectedFile = platformFile
             },
             platformSettings = null
         )
@@ -215,7 +210,7 @@ class TransferScreen : KoinComponent, Screen {
                         enabled = selectedFileMeta != null && selectedOption != null,
                         onClick = {
                             scope.launch {
-                                transferVM.sendToDevice(selectedOption!!.id, selectedFileMeta!!)
+                                transferVM.sendDownloadRequest(selectedOption!!.id, selectedFileMeta!!, selectedFile!!)
                             }
                         }) {
                         Text("Send")
@@ -291,6 +286,7 @@ class TransferScreen : KoinComponent, Screen {
                                         imageRes = Res.drawable.crossed,
                                         onClick = {
                                             transferVM.incomingFileDialog.value = false
+                                            transferVM.sendAcknowledgement(accept = false)
                                         },
                                         contentDescription = "Decline"
                                     )
@@ -303,6 +299,8 @@ class TransferScreen : KoinComponent, Screen {
                                         contentDescription = "Accept",
                                         onClick = {
                                             transferVM.incomingFileDialog.value = false
+                                            transferVM.sendAcknowledgement(accept = true)
+
                                         },
                                         modifier = Modifier.align(Alignment.Center)
                                     )

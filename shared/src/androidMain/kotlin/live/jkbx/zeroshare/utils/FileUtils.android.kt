@@ -25,6 +25,7 @@ actual fun PlatformFile.toFileMetaData(): FileTransferMetadata {
         fileSize = file.length(),
         mimeType = mimeType,
         extension = mimeTypeObj.extensions.firstOrNull(),
+
     )
     return fileMetadata
 }

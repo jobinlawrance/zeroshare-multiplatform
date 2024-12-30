@@ -31,7 +31,7 @@ class DeviceStreamImpl(override val coroutineContext: CoroutineContext) : Device
 
                 try {
                     val sseResponse = SSEResponse(
-                        type = SSEType.ACKNOWLEDGEMENT,
+                        type = sseRequest.type,
                         data = sseRequest.data,
                         device = device
                     )
