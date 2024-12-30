@@ -11,6 +11,7 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.sse.SSE
 import io.ktor.client.plugins.sse.sse
+import io.ktor.client.plugins.websocket.*
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -18,6 +19,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.rpc.krpc.ktor.client.installRPC
 import kotlinx.serialization.json.Json
@@ -220,10 +222,13 @@ fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClien
 //
 //        }
 //        install(contentTypePlugin)
-        installRPC {
-            waitForServices = true
+//        installRPC {
+//            waitForServices = true
+//        }
+        install(WebSockets) {
+            contentConverter = KotlinxWebsocketSerializationConverter(kJson)
         }
-        installOpenTelemetry()
+//        installOpenTelemetry()
     }
     return client
 }

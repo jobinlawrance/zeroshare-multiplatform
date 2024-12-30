@@ -26,6 +26,7 @@ enum class SSEType {
     ACKNOWLEDGEMENT,
     DOWNLOAD_REQUEST,
     DOWNLOAD_RESPONSE,
+    DOWNLOAD_COMPLETE,
 }
 
 @Serializable

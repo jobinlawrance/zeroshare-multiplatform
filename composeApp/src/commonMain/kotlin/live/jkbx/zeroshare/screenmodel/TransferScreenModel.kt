@@ -25,7 +25,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
     private val log by injectLogger("TransferScreenModel")
     private val backendApi by inject<BackendApi>()
     private val json by inject<Json>()
-    private val rpcClient = RpcClient()
+    private val rpcClient = SocketClient("ws://69.69.0.5:4000/stream")
 
     val devices = mutableStateOf<List<Device>>(emptyList())
     val defaultDevice = mutableStateOf<Device?>(null)
@@ -51,17 +51,8 @@ class TransferScreenModel : ScreenModel, KoinComponent {
 
             log.d { "Device id is $id" }
             val device = devices.value.first { it.deviceId == uniqueDeviceId() }
-            val _device = live.jkbx.zeroshare.rpc.common.Device(
-                created = device.created,
-                deviceId = device.deviceId,
-                iD = device.iD,
-                ipAddress = device.ipAddress,
-                machineName = device.machineName,
-                platform = device.platform,
-                updated = device.updated,
-                userId = device.userId
-            )
-            rpcClient.subscribe(requestChannel.consumeAsFlow(), _device).collect {
+
+            rpcClient.subscribe(requestChannel.consumeAsFlow(), device).collect {
                 log.d { "Received response $it" }
                 when (it.type) {
                     SSEType.DOWNLOAD_REQUEST -> {
@@ -77,7 +68,15 @@ class TransferScreenModel : ScreenModel, KoinComponent {
                         sendDownloadResponse(device.ipAddress, randomId)
                     }
 
-                    SSEType.DOWNLOAD_RESPONSE -> {}
+                    SSEType.DOWNLOAD_RESPONSE -> {
+                        val downloadResponse = json.decodeFromJsonElement(DownloadResponse.serializer(), it.data)
+                        ktorServer.downloadFile(downloadResponse.downloadUrl, downloadResponse.fileName, onCompleted = {
+                            sendDownloadComplete()
+                        })
+                    }
+                    SSEType.DOWNLOAD_COMPLETE -> {
+                        ktorServer.stopServer()
+                    }
                 }
             }
         }
@@ -96,6 +95,19 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             senderId = uniqueDeviceId()
         )
 
+        screenModelScope.launch {
+            requestChannel.send(sseRequest)
+        }
+    }
+
+    private fun sendDownloadComplete() {
+        val sseRequest = SSERequest(
+            type = SSEType.DOWNLOAD_COMPLETE,
+            data = json.encodeToJsonElement(""),
+            uniqueId = uniqueDeviceId(),
+            deviceId = incomingDevice.value!!.iD,
+            senderId = uniqueDeviceId()
+        )
         screenModelScope.launch {
             requestChannel.send(sseRequest)
         }
