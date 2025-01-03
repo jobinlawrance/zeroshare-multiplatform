@@ -12,8 +12,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.models.Device
-import live.jkbx.zeroshare.rpc.common.SSERequest
-import live.jkbx.zeroshare.rpc.common.SSEResponse
+import live.jkbx.zeroshare.models.SSERequest
+import live.jkbx.zeroshare.models.SSEResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

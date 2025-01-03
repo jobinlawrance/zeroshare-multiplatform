@@ -11,10 +11,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.models.Device
+import live.jkbx.zeroshare.models.DownloadResponse
+import live.jkbx.zeroshare.models.SSERequest
+import live.jkbx.zeroshare.models.SSEType
 import live.jkbx.zeroshare.network.BackendApi
-import live.jkbx.zeroshare.rpc.common.DownloadResponse
-import live.jkbx.zeroshare.rpc.common.SSERequest
-import live.jkbx.zeroshare.rpc.common.SSEType
 import live.jkbx.zeroshare.socket.FileTransferMetadata
 import live.jkbx.zeroshare.socket.KtorServer
 import live.jkbx.zeroshare.utils.uniqueDeviceId
@@ -34,7 +34,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
 
     val incomingFileDialog = mutableStateOf(false)
     val incomingFile = mutableStateOf<FileTransferMetadata?>(null)
-    val incomingDevice = mutableStateOf<live.jkbx.zeroshare.rpc.common.Device?>(null)
+    val incomingDevice = mutableStateOf<Device?>(null)
 
     private val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
     private val ktorServer = KtorServer(log)

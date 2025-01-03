@@ -3,6 +3,36 @@ package live.jkbx.zeroshare.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
+
+@Serializable
+data class DownloadResponse(
+    val downloadUrl: String,
+    val fileName: String
+)
+
+@Serializable
+data class SSERequest(
+    val deviceId: String,
+    val senderId: String,
+    val type: SSEType,
+    val data: JsonElement,
+    val uniqueId: String
+)
+
+enum class SSEType {
+    ACKNOWLEDGEMENT,
+    DOWNLOAD_REQUEST,
+    DOWNLOAD_RESPONSE,
+    DOWNLOAD_COMPLETE,
+}
+
+@Serializable
+data class SSEResponse(
+    val type: SSEType,
+    val data: JsonElement,
+    val device: Device
+)
 
 @Serializable
 data class Device(

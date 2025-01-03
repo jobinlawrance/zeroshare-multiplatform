@@ -49,16 +49,13 @@ import live.jkbx.zeroshare.utils.getMachineName
 import live.jkbx.zeroshare.utils.getPlatform
 import live.jkbx.zeroshare.utils.loginWithGoogle
 import live.jkbx.zeroshare.utils.uniqueDeviceId
-import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
 import org.jetbrains.compose.resources.painterResource
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.koin.core.parameter.parametersOf
 import zeroshare.composeapp.generated.resources.Res
 import zeroshare.composeapp.generated.resources.neural
 import zeroshare.composeapp.generated.resources.search
 import zeroshare.composeapp.generated.resources.zerotier
-import java.util.UUID
 
 
 class LoginScreen : Screen, KoinComponent {

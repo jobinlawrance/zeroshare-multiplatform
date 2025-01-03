@@ -55,7 +55,7 @@ kotlin {
             api(libs.ktor.http)
             implementation(libs.ktor.server.call.logging)
             implementation(libs.okio)
-            implementation(project(":rpc-common"))
+//            implementation(project(":rpc-common"))
             implementation(libs.kotlinx.rpc.krpc.client)
             implementation(libs.kotlinx.rpc.krpc.ktor.client)
             implementation(libs.kotlinx.rpc.krpc.serialization.json)
