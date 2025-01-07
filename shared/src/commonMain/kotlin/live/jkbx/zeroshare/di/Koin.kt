@@ -24,6 +24,7 @@ import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
 const val tokenKey = "token"
+const val refreshTokenKey = "refreshToken"
 const val networkIdKey = "networkId"
 const val nodeIdKey = "nodeId"
 const val nebulaSetupKey = "nebulaSetup"
@@ -71,7 +72,7 @@ private val coreModule = module {
     factory { GoogleAuthCredentials(get(qualifier("serverId"))) }
     single { SettingsUtil() }
     single { KtorFileTransfer() }
-    single { getHttpClient(get(), get(), baseLogger.withTag("Http-Client")) }
+    single { getHttpClient(get(), get(), baseLogger.withTag("Http-Client"), get()) }
 
 }
 

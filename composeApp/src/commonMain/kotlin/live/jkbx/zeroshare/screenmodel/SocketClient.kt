@@ -38,9 +38,16 @@ class SocketClient(private val serverUrl: String) : KoinComponent {
                     }
                     // Receive responses from the server
                     for (frame in incoming) {
-                        if (frame is Frame.Text) {
-                            val response = json.decodeFromString<SSEResponse>(frame.readText())
-                            channel.trySend(response).isSuccess
+                        when (frame) {
+                            is Frame.Ping -> send(Frame.Pong(frame.data))
+                            is Frame.Text -> {
+                                val response = json.decodeFromString<SSEResponse>(frame.readText())
+                                channel.trySend(response).isSuccess
+                            }
+
+                            is Frame.Binary -> TODO()
+                            is Frame.Close -> TODO()
+                            is Frame.Pong -> TODO()
                         }
                     }
                 } catch (e: Exception) {

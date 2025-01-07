@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.models.Device
@@ -17,6 +18,7 @@ import live.jkbx.zeroshare.models.SSEType
 import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.socket.FileTransferMetadata
 import live.jkbx.zeroshare.socket.KtorServer
+import live.jkbx.zeroshare.socket.SocketStream
 import live.jkbx.zeroshare.utils.uniqueDeviceId
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -25,7 +27,6 @@ class TransferScreenModel : ScreenModel, KoinComponent {
     private val log by injectLogger("TransferScreenModel")
     private val backendApi by inject<BackendApi>()
     private val json by inject<Json>()
-    private val rpcClient = SocketClient("ws://69.69.0.5:4000/stream")
 
     val devices = mutableStateOf<List<Device>>(emptyList())
     val defaultDevice = mutableStateOf<Device?>(null)
@@ -36,7 +37,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
     val incomingFile = mutableStateOf<FileTransferMetadata?>(null)
     val incomingDevice = mutableStateOf<Device?>(null)
 
-    private val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
+    private val socketStream = SocketStream()
     private val ktorServer = KtorServer(log)
 
     init {
@@ -52,7 +53,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             log.d { "Device id is $id" }
             val device = devices.value.first { it.deviceId == uniqueDeviceId() }
 
-            rpcClient.subscribe(requestChannel.consumeAsFlow(), device).collect {
+            socketStream.startListening(device) {
                 log.d { "Received response $it" }
                 when (it.type) {
                     SSEType.DOWNLOAD_REQUEST -> {
@@ -62,10 +63,15 @@ class TransferScreenModel : ScreenModel, KoinComponent {
                     }
 
                     SSEType.ACKNOWLEDGEMENT -> {
+                        val accept = json.decodeFromJsonElement<Boolean>( it.data)
                         // start server
-                        val randomId = ktorServer.startServer(selectedFile.value!!)
-                        incomingDevice.value = it.device
-                        sendDownloadResponse(device.ipAddress, randomId)
+                        if (accept) {
+                            screenModelScope.launch {
+                                val randomId = ktorServer.startServer(selectedFile.value!!)
+                                incomingDevice.value = it.device
+                                sendDownloadResponse(device.ipAddress, randomId)
+                            }
+                        }
                     }
 
                     SSEType.DOWNLOAD_RESPONSE -> {
@@ -94,10 +100,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             deviceId = incomingDevice.value!!.iD,
             senderId = uniqueDeviceId()
         )
-
-        screenModelScope.launch {
-            requestChannel.send(sseRequest)
-        }
+        socketStream.send(sseRequest)
     }
 
     private fun sendDownloadComplete() {
@@ -108,9 +111,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             deviceId = incomingDevice.value!!.iD,
             senderId = uniqueDeviceId()
         )
-        screenModelScope.launch {
-            requestChannel.send(sseRequest)
-        }
+        socketStream.send(sseRequest)
     }
 
     fun sendDownloadRequest(id: String, fileMetadata: FileTransferMetadata, file: PlatformFile) {
@@ -126,9 +127,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
         selectedFileMeta.value = fileMetadata
         selectedFile.value = file
 
-        screenModelScope.launch {
-            requestChannel.send(sseRequest)
-        }
+        socketStream.send(sseRequest)
     }
 
     fun sendAcknowledgement(accept: Boolean) {
@@ -140,9 +139,7 @@ class TransferScreenModel : ScreenModel, KoinComponent {
             senderId = uniqueDeviceId()
         )
 
-        screenModelScope.launch {
-            requestChannel.send(sseRequest)
-        }
+        socketStream.send(sseRequest)
     }
 
     override fun onDispose() {

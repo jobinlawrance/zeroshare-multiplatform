@@ -13,6 +13,7 @@ import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 import io.opentelemetry.semconv.ResourceAttributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import live.jkbx.zeroshare.di.refreshTokenKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
@@ -50,6 +51,7 @@ actual fun loginWithGoogle(
     LaunchedEffect(Unit) {
         zeroTierViewModel.listenToLogin(sessionToken, { sseEvent ->
             settings.putString(tokenKey, sseEvent.token)
+            settings.putString(refreshTokenKey, sseEvent.refreshToken)
             onLoginSuccess(sseEvent)
         })
     }

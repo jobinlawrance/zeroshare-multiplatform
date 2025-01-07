@@ -55,6 +55,7 @@ class MainApplication : Application() {
                         readTimeout(0, TimeUnit.MINUTES)
                         writeTimeout(0, TimeUnit.MINUTES)
                         connectTimeout(0, TimeUnit.MINUTES)
+                        pingInterval(20, TimeUnit.SECONDS)
                     }
                 }
 //                CIO.create()

@@ -3,38 +3,36 @@ package live.jkbx.zeroshare.network
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
 import io.ktor.client.*
-import io.ktor.client.call.body
-import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.call.*
+import io.ktor.client.engine.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.sse.SSE
-import io.ktor.client.plugins.sse.sse
+import io.ktor.client.plugins.auth.*
+import io.ktor.client.plugins.auth.providers.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.plugins.sse.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.rpc.krpc.ktor.client.installRPC
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.networkIdKey
+import live.jkbx.zeroshare.di.refreshTokenKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.Device
 import live.jkbx.zeroshare.models.Member
-import live.jkbx.zeroshare.utils.installOpenTelemetry
-
 import live.jkbx.zeroshare.models.SSEEvent
-
 import live.jkbx.zeroshare.models.SignedKeyResponse
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+
+private val baseUrl = "https://zeroshare.jkbx.live"
+//private val baseUrl = "http://69.69.0.5:4000"
 
 class BackendApi : KoinComponent {
     private val settings: Settings by inject<Settings>()
@@ -42,8 +40,6 @@ class BackendApi : KoinComponent {
     private val log by injectLogger("BackendAPI")
     private val client by inject<HttpClient>()
 
-        private val baseUrl = "https://zeroshare.jkbx.live"
-//    private val baseUrl = "http://localhost:4000"
 
     fun creteNetworkURL(sessionToken: String): String {
         return "$baseUrl/login/$sessionToken"
@@ -58,6 +54,7 @@ class BackendApi : KoinComponent {
                         log.d { "Event from server:" }
                         val sseEvent = parseSseToken(event.data ?: "")
                         settings.putString(tokenKey, sseEvent.token)
+                        settings.putString(refreshTokenKey, sseEvent.refreshToken)
                         settings.putString(networkIdKey, sseEvent.networkId)
                         onReceived(sseEvent)
                     }
@@ -155,6 +152,7 @@ class BackendApi : KoinComponent {
         })
         val sseEvent = req.body<SSEEvent>()
         settings.putString(tokenKey, sseEvent.token)
+        settings.putString(refreshTokenKey, sseEvent.refreshToken)
         settings.putString(networkIdKey, sseEvent.networkId)
         return sseEvent
     }
@@ -171,7 +169,7 @@ class BackendApi : KoinComponent {
         return post(url, {
             block()
             header(HttpHeaders.ContentType, "application/json")
-            header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
+//            header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
         })
     }
 
@@ -182,16 +180,21 @@ class BackendApi : KoinComponent {
         return get(url, {
             block()
             header(HttpHeaders.ContentType, "application/json")
-            header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
+//            header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
         })
     }
 }
 
 
-fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClient {
+fun getHttpClient(
+    engine: HttpClientEngine,
+    kJson: Json,
+    log: Logger,
+    settings: Settings,
+): HttpClient {
 
     val client = HttpClient(engine) {
-        expectSuccess = true
+        expectSuccess = false
         install(HttpTimeout) {
             requestTimeoutMillis = HttpTimeoutConfig.INFINITE_TIMEOUT_MS
         }
@@ -212,21 +215,53 @@ fun getHttpClient(engine: HttpClientEngine, kJson: Json, log: Logger): HttpClien
             showRetryEvents()
         }
 //        TODO: Not sure why this isn't working
-//        install(Auth) {
-//            bearer {
-//                sendWithoutRequest { true }
-//                loadTokens {
-//                    BearerTokens(settings.getString(tokenKey, ""), "")
-//                }
-//            }
-//
-//        }
+        install(Auth) {
+            bearer {
+                sendWithoutRequest { true }
+                loadTokens {
+                    BearerTokens(
+                        accessToken = settings.getString(tokenKey, ""),
+                        refreshToken = settings.getString(refreshTokenKey, "")
+                    )
+                }
+                refreshTokens {
+                    val refreshToken = client.post("$baseUrl/refresh") {
+                        contentType(ContentType.Application.Json)
+                        setBody(mapOf("refresh_Token" to oldTokens?.refreshToken))
+                        markAsRefreshTokenRequest()
+                    }
+                    try {
+
+                        if (refreshToken.status == HttpStatusCode.OK) {
+                            val tokens = refreshToken.body<SSEEvent>()
+                            settings.putString(refreshTokenKey, tokens.refreshToken)
+                            settings.putString(tokenKey, tokens.token)
+                            BearerTokens(
+                                accessToken = tokens.token,
+                                refreshToken = tokens.refreshToken
+                            )
+                        } else {
+                            log.e { "Refresh token failed" }
+                            //TODO: Navigate to login screen
+                            null
+                        }
+                    } catch (e: Exception) {
+                        log.e(e) { "Refresh token failed" }
+                        //TODO: Navigate to login screen
+                        null
+                    }
+                }
+
+            }
+
+        }
 //        install(contentTypePlugin)
 //        installRPC {
 //            waitForServices = true
 //        }
         install(WebSockets) {
             contentConverter = KotlinxWebsocketSerializationConverter(kJson)
+            pingInterval = 20.seconds
         }
 //        installOpenTelemetry()
     }
