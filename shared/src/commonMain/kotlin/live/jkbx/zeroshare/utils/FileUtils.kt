@@ -2,6 +2,11 @@ package live.jkbx.zeroshare.utils
 
 import io.github.vinceglb.filekit.core.PickerType
 import io.github.vinceglb.filekit.core.PlatformFile
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import live.jkbx.zeroshare.models.DownloadResponse
 import live.jkbx.zeroshare.socket.FileTransferMetadata
 import kotlin.math.round
 import kotlin.math.roundToInt
@@ -139,3 +144,19 @@ val excelMimeTypes = listOf(
 expect fun PlatformFile.toFileMetaData(): FileTransferMetadata
 
 expect fun getKoinContext(): Any
+
+fun JsonElement.toFileMetaData(json: Json): FileTransferMetadata {
+    return json.decodeFromJsonElement<FileTransferMetadata>(this)
+}
+
+fun JsonElement.toBoolean(json: Json): Boolean {
+    return json.decodeFromJsonElement<Boolean>(this)
+}
+
+fun JsonElement.toDownloadResponse(json: Json): DownloadResponse {
+    return json.decodeFromJsonElement<DownloadResponse>(this)
+}
+
+fun String.toJsonElement(json: Json): JsonElement {
+    return json.encodeToJsonElement(this)
+}

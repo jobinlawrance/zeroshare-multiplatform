@@ -35,6 +35,22 @@ data class SSEResponse(
 )
 
 @Serializable
+data class TypedSSEResponse<T>(
+    val type: SSEType,
+    val data: T,
+    val device: Device
+)
+
+@Serializable
+data class TypedSSERequest<T>(
+    val type: SSEType,
+    val data: T,
+    val uniqueId: String,
+    val deviceId: String,
+    val senderId: String
+)
+
+@Serializable
 data class Device(
     @SerialName("Created")
     val created: Int,

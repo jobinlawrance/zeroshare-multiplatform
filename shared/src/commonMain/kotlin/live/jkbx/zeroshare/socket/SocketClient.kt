@@ -1,10 +1,11 @@
-package live.jkbx.zeroshare.screenmodel
+package live.jkbx.zeroshare.socket
 
 import io.ktor.client.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -48,6 +49,7 @@ class SocketClient(private val serverUrl: String) : KoinComponent {
                             is Frame.Binary -> TODO()
                             is Frame.Close -> TODO()
                             is Frame.Pong -> TODO()
+                            else -> TODO()
                         }
                     }
                 } catch (e: Exception) {
