@@ -1,17 +1,12 @@
 package live.jkbx.zeroshare.screens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -21,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,24 +36,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import live.jkbx.zeroshare.ZeroTierPeer
 import live.jkbx.zeroshare.di.networkIdKey
 import live.jkbx.zeroshare.models.Member
+import live.jkbx.zeroshare.utils.getPlatform
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
-import org.jetbrains.compose.resources.imageResource
-import org.jetbrains.compose.resources.painterResource
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import zeroshare.composeapp.generated.resources.Res
-import zeroshare.composeapp.generated.resources.android
-import zeroshare.composeapp.generated.resources.apple
-import zeroshare.composeapp.generated.resources.laptop
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import live.jkbx.zeroshare.ZeroTierPeer
-import live.jkbx.zeroshare.di.nodeIdKey
-import live.jkbx.zeroshare.utils.getPlatform
 
 class PeerScreen : Screen, KoinComponent {
 
@@ -172,11 +158,11 @@ fun MemberItem(node: Member, isHighlighted: Boolean, onClick: (ipAddress: String
     val textColor = if (isHighlighted) Color.Yellow else Color.White
     val dateFormatter = SimpleDateFormat("d MMM, h:mm a", Locale.getDefault())
     val formattedDate = dateFormatter.format(Date(node.creationTime))
-    val image = when {
-        node.platform.contains("Android") -> Res.drawable.android
-        node.platform.contains("iOS") -> Res.drawable.apple
-        else -> Res.drawable.laptop
-    }
+//    val image = when {
+//        node.platform.contains("Android") -> Res.drawable.android
+//        node.platform.contains("iOS") -> Res.drawable.apple
+//        else -> Res.drawable.laptop
+//    }
 
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -192,13 +178,13 @@ fun MemberItem(node: Member, isHighlighted: Boolean, onClick: (ipAddress: String
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Leading avatar
-            Image(
-                painter = painterResource(image), // Placeholder avatar
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .padding(8.dp)
-            )
+//            Image(
+//                painter = painterResource(image), // Placeholder avatar
+//                contentDescription = null,
+//                modifier = Modifier
+//                    .size(48.dp)
+//                    .padding(8.dp)
+//            )
 
             // Content
             Column(

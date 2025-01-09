@@ -1,14 +1,13 @@
 package live.jkbx.zeroshare.di
 
 import co.touchlab.kermit.Logger
-import co.touchlab.kermit.XcodeSeverityWriter
 import com.russhwolf.settings.NSUserDefaultsSettings
 import com.russhwolf.settings.Settings
-import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.darwin.Darwin
+import io.ktor.client.engine.*
+import io.ktor.client.engine.darwin.*
+import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.socket.FileSaver
-import live.jkbx.zeroshare.socket.FileTransfer
 import live.jkbx.zeroshare.socket.KmpHashing
 import live.jkbx.zeroshare.utils.SettingsUtil
 import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
@@ -16,7 +15,6 @@ import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.module.Module
-import org.koin.core.module.single
 import org.koin.core.parameter.parametersOf
 import org.koin.dsl.module
 import platform.Foundation.NSUserDefaults
@@ -45,6 +43,7 @@ object KotlinDependencies : KoinComponent {
     fun getBackendApi() = getKoin().get<BackendApi>()
     fun getSettingsUtil() = getKoin().get<SettingsUtil>()
     fun getFileSaver() = getKoin().get<FileSaver>()
+    fun getJson() = getKoin().get<Json>()
 }
 
 actual val platformModule: Module = module {

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.skie)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeMultiplatform)
 }
 
 val serverId= gradleLocalProperties(rootDir, providers).getProperty("serverId","")
@@ -69,6 +70,15 @@ kotlin {
             implementation(libs.ktor.client.core) // For the Ktor client
             api(libs.ktor.client.socket)
             implementation(libs.kotlinx.rpc.krpc.ktor.client)
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+            implementation(compose.components.resources)
+            implementation(compose.components.uiToolingPreview)
+            api(libs.ktor.server.cio)
+            api(libs.ktor.server.core)
+            api(libs.ktor.http)
         }
 
         iosMain.dependencies {

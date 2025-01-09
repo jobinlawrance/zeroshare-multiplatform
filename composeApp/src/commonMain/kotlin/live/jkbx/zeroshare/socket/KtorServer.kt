@@ -1,11 +1,8 @@
 package live.jkbx.zeroshare.socket
 
 import co.touchlab.kermit.Logger
-import io.github.vinceglb.filekit.core.FileKit
 import io.github.vinceglb.filekit.core.PlatformFile
 import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.install
 import io.ktor.server.cio.*
@@ -13,14 +10,10 @@ import io.ktor.server.engine.*
 import io.ktor.server.plugins.calllogging.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.utils.io.*
-import io.ktor.utils.io.core.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.io.readByteArray
-import live.jkbx.zeroshare.utils.FileSaver
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.slf4j.event.Level
@@ -31,7 +24,7 @@ class KtorServer(private val log: Logger) : KoinComponent {
     private var server: EmbeddedServer<*, *>? = null
     private val client by inject<HttpClient>()
 
-    suspend fun startServer(file: PlatformFile): String {
+    suspend fun startServer(file: PlatformFile, fileSize: Long): String {
         val randomId = UUID.randomUUID().toString()
 
         if (server != null) {
@@ -50,6 +43,8 @@ class KtorServer(private val log: Logger) : KoinComponent {
                     }
                     routing {
                         get("/download/$randomId") {
+                            call.response.header(HttpHeaders.ContentLength, fileSize)
+                            call.response.header(HttpHeaders.AcceptRanges, "bytes")
                             call.respondOutputStream(ContentType.Application.OctetStream) {
                                 file.getStream().use { platformInputStream ->
                                     val buffer = ByteArray(DEFAULT_BUFFER_SIZE) // 8 KB buffer
@@ -71,27 +66,6 @@ class KtorServer(private val log: Logger) : KoinComponent {
                 // Complete the continuation when the server starts
                 continuation.resume(randomId) { throwable ->
                     log.e(throwable) { "Error while starting the server" }
-                }
-            }
-        }
-    }
-
-    fun downloadFile(url: String, fileName: String, onCompleted: () -> Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val file = FileSaver(fileName)
-            client.prepareGet(url).execute { response ->
-                if (response.status == HttpStatusCode.OK) {
-                    val channel: ByteReadChannel = response.bodyAsChannel()
-                    log.d { "Starting to download file" }
-                    while (!channel.isClosedForRead) {
-                        val packet = channel.readRemaining(DEFAULT_BUFFER_SIZE.toLong())
-                        while (!packet.exhausted()) {
-                            val bytes = packet.readByteArray()
-                            file.append(bytes)
-                        }
-                    }
-                    log.d { "File downloaded successfully" }
-                    onCompleted()
                 }
             }
         }

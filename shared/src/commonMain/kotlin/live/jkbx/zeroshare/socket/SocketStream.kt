@@ -18,12 +18,15 @@ import live.jkbx.zeroshare.models.TypedSSEResponse
 import live.jkbx.zeroshare.utils.toBoolean
 import live.jkbx.zeroshare.utils.toDownloadResponse
 import live.jkbx.zeroshare.utils.toFileMetaData
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class SocketStream(val json: Json) {
+class SocketStream: KoinComponent {
     //    private val rpcClient = SocketClient("ws://69.69.0.5:4000/stream")
     private val rpcClient = SocketClient("wss://zeroshare.jkbx.live/stream")
-    val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
-    val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
+    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val json by inject<Json>()
 
     fun startListening(
         device: Device,
@@ -58,19 +61,64 @@ class SocketStream(val json: Json) {
         }
     }
 
-    inline fun <reified T> send(sseRequest: TypedSSERequest<T>) {
+    private inline fun <reified T> send(sseRequest: TypedSSERequest<T>) {
         coroutineScope.launch {
             requestChannel.send(sseRequest.toSSERequest(json))
         }
     }
+
+    private inline fun <reified T> TypedSSERequest<T>.toSSERequest(json: Json): SSERequest {
+        return SSERequest(
+            type = type,
+            data = json.encodeToJsonElement(data),
+            uniqueId = uniqueId,
+            deviceId = deviceId,
+            senderId = senderId
+        )
+    }
+
+    fun sendAcknowledgement(accept: Boolean, incomingDevice: Device, uniqueDeviceId: String) {
+        val sseRequest = TypedSSERequest(
+            type = SSEType.ACKNOWLEDGEMENT,
+            data = accept,
+            uniqueId = uniqueDeviceId,
+            deviceId = incomingDevice.iD,
+            senderId = uniqueDeviceId
+        )
+        send(sseRequest)
+    }
+
+    fun sendDownloadRequest(id: String, fileMetadata: FileTransferMetadata, uniqueDeviceId: String) {
+        val sseRequest = TypedSSERequest(
+            type = SSEType.DOWNLOAD_REQUEST,
+            data = fileMetadata,
+            uniqueId = uniqueDeviceId,
+            deviceId = id,
+            senderId = uniqueDeviceId
+        )
+        send(sseRequest)
+    }
+
+    fun sendDownloadComplete(uniqueDeviceId: String, incomingDevice: Device) {
+        val sseRequest = TypedSSERequest(
+            type = SSEType.DOWNLOAD_COMPLETE,
+            data = "",
+            uniqueId = uniqueDeviceId,
+            deviceId = incomingDevice.iD,
+            senderId = uniqueDeviceId
+        )
+        send(sseRequest)
+    }
+
+    fun sendDownloadResponse(downloadResponse: DownloadResponse, uniqueDeviceId: String, value: Device) {
+        val sseRequest = TypedSSERequest(
+            type = SSEType.DOWNLOAD_RESPONSE,
+            data = downloadResponse,
+            uniqueId = uniqueDeviceId,
+            deviceId = value.iD,
+            senderId = uniqueDeviceId
+        )
+        send(sseRequest)
+    }
 }
 
-inline fun <reified T> TypedSSERequest<T>.toSSERequest(json: Json): SSERequest {
-    return SSERequest(
-        type = type,
-        data = json.encodeToJsonElement(data),
-        uniqueId = uniqueId,
-        deviceId = deviceId,
-        senderId = senderId
-    )
-}

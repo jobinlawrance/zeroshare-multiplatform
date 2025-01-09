@@ -17,6 +17,12 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.*
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.utils.io.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
+import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.networkIdKey
@@ -26,12 +32,12 @@ import live.jkbx.zeroshare.models.Device
 import live.jkbx.zeroshare.models.Member
 import live.jkbx.zeroshare.models.SSEEvent
 import live.jkbx.zeroshare.models.SignedKeyResponse
+import live.jkbx.zeroshare.utils.FileSaver
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private val baseUrl = "https://zeroshare.jkbx.live"
+val baseUrl = "https://zeroshare.jkbx.live"
 //private val baseUrl = "http://69.69.0.5:4000"
 
 class BackendApi : KoinComponent {
@@ -160,6 +166,31 @@ class BackendApi : KoinComponent {
     suspend fun getZTPeers(networkId: String = settings.getString(networkIdKey, "")): List<Member> {
         val req = client.getWithAuth("$baseUrl/peers?networkId=$networkId")
         return req.body<List<Member>>()
+    }
+
+    fun downloadFile(
+        url: String,
+        fileName: String,
+        onCompleted: () -> Unit,
+        onBytes: ((bytes: ByteArray) -> Unit)? = null
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val file = FileSaver(fileName)
+            client.prepareGet(url).execute { response ->
+                if (response.status == HttpStatusCode.OK) {
+                    val channel: ByteReadChannel = response.bodyAsChannel()
+                    while (!channel.isClosedForRead) {
+                        val packet = channel.readRemaining((8 * 1024).toLong())
+                        while (!packet.exhausted()) {
+                            val bytes = packet.readByteArray()
+                            file.append(bytes)
+                        }
+                    }
+                    log.d { "File downloaded successfully" }
+                    onCompleted()
+                }
+            }
+        }
     }
 
     suspend fun HttpClient.postWithAuth(

@@ -8,7 +8,8 @@ import kotlinx.serialization.json.JsonElement
 @Serializable
 data class DownloadResponse(
     val downloadUrl: String,
-    val fileName: String
+    val fileName: String,
+    val proxyUrl: String,
 )
 
 @Serializable

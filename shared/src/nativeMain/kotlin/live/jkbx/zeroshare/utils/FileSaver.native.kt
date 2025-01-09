@@ -19,15 +19,17 @@ actual class FileSaver actual constructor(fileName: String) {
         val fileURL = NSURL.fileURLWithPath(filePath)
         val fileManager = NSFileManager.defaultManager
 
+        println("File path: $filePath")
+
         if (!fileManager.fileExistsAtPath(filePath)) {
             // If the file doesn't exist, create it
-            bytes.toNSData().writeToURL(fileURL, true)
-        } else {
-            // Open the file for appending
-            val fileHandle = NSFileHandle.fileHandleForUpdatingURL(fileURL, null)
-            fileHandle?.seekToEndOfFile()
-            fileHandle?.writeData(bytes.toNSData(), null)
-            fileHandle?.closeFile()
+            println("File doesn't exist, creating it")
+            fileManager.createFileAtPath(filePath, null, null)
         }
+            // Open the file for appending
+        val fileHandle = NSFileHandle.fileHandleForUpdatingURL(fileURL, null)
+        fileHandle?.seekToEndOfFile()
+        fileHandle?.writeData(bytes.toNSData(), null)
+        fileHandle?.closeFile()
     }
 }

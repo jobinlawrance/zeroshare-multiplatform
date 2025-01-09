@@ -47,7 +47,7 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DA47F88A2CEDEA7F0022001A /* screens */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = screens; sourceTree = "<group>"; };
-		DA82DEDE2CF7B487004FC733 /* sockets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = sockets; sourceTree = "<group>"; };
+		DA651AF22D3009240011470D /* controllers */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = controllers; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,7 +104,7 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
-				DA82DEDE2CF7B487004FC733 /* sockets */,
+				DA651AF22D3009240011470D /* controllers */,
 				DA47F88A2CEDEA7F0022001A /* screens */,
 				DA47F8782CEC67DB0022001A /* Koin.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
@@ -142,7 +142,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				DA47F88A2CEDEA7F0022001A /* screens */,
-				DA82DEDE2CF7B487004FC733 /* sockets */,
+				DA651AF22D3009240011470D /* controllers */,
 			);
 			name = iosApp;
 			packageProductDependencies = (
