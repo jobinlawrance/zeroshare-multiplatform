@@ -6,13 +6,11 @@ on:
       - 'release-desktop-*'  # Trigger for tags like release-desktop-v1.0.0
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # Use a default runner for matrix jobs
-
+  snapshot:
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]  # Matrix for different OSes
-      fail-fast: false  # Continue even if one job fails
+        os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
       - name: Checkout repository
