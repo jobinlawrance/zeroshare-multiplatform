@@ -128,8 +128,19 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "live.jkbx.zeroshare"
+            packageName = "ZeroShare"
             packageVersion = "1.0.0"
+
+            macOS {
+                bundleID = "live.jkbx.zeroshare"
+                iconFile.set(project.file("src/commonMain/composeResources/drawable/MyApp.icns"))
+            }
+            windows {
+                iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.ico"))
+            }
+            linux {
+                iconFile.set(project.file("src/commonMain/composeResources/drawable/neural.png"))
+            }
         }
     }
 }
