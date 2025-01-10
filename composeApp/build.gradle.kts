@@ -138,7 +138,7 @@ compose.desktop {
                 TargetFormat.Rpm,
             )
             packageName = "ZeroShare"
-            packageVersion = "1.0.0"
+            packageVersion = getVersionName()
             description = "ZeroShare - P2P File Sharing"
             copyright = "© 2024 Jobin Lawrance. All rights reserved."
             vendor = "Jobin Lawrance"
