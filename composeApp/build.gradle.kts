@@ -125,6 +125,9 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "live.jkbx.zeroshare.MainKt"
+        buildTypes.release.proguard {
+            version.set("7.6.1")
+        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

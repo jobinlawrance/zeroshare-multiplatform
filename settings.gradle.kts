@@ -33,5 +33,3 @@ dependencyResolutionManagement {
 
 include(":composeApp")
 include(":shared")
-include("rpc")
-include("rpc-common")
