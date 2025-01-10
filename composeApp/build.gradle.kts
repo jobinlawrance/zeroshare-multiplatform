@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.Packaging
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -30,7 +29,7 @@ kotlin {
             implementation(libs.androidx.work.runtime)
             implementation(libs.androidx.work.runtime.ktx)
             implementation(libs.androidx.security.crypto.ktx)
-            implementation (libs.logback.android)
+            implementation(libs.logback.android)
             implementation(libs.ktor.client.core)
         }
         commonMain.dependencies {
@@ -130,9 +129,19 @@ compose.desktop {
         }
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(
+                TargetFormat.Dmg,
+                TargetFormat.Pkg,
+                TargetFormat.Msi,
+                TargetFormat.Exe,
+                TargetFormat.Deb,
+                TargetFormat.Rpm,
+            )
             packageName = "ZeroShare"
             packageVersion = "1.0.0"
+            description = "ZeroShare - P2P File Sharing"
+            copyright = "© 2024 Jobin Lawrance. All rights reserved."
+            vendor = "Jobin Lawrance"
 
             macOS {
                 bundleID = "live.jkbx.zeroshare"
@@ -140,10 +149,26 @@ compose.desktop {
             }
             windows {
                 iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.ico"))
+                perUserInstall = true
+
             }
             linux {
                 iconFile.set(project.file("src/commonMain/composeResources/drawable/neural.png"))
+                rpmLicenseType = "Apache-2.0"
             }
         }
     }
 }
+
+fun getVersionCode(): Int =
+    providers.exec {
+        commandLine("git", "rev-list", "HEAD", "--first-parent", "--count")
+    }.standardOutput.asText.get().trim().toInt()
+
+fun getVersionName(): String =
+    providers.exec {
+        commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "*-desktop")
+    }.standardOutput
+        .asText.get()
+        .trim()
+        .replace("-desktop", "")
