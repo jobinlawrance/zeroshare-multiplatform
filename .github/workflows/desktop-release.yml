@@ -45,11 +45,11 @@ jobs:
         run: |
           # Find the binary based on the OS
           if [[ "${{ matrix.os }}" == "macos-latest" ]]; then
-            binary_path="composeApp/build/compose/binaries/main/dmg"
+            binary_path="/Users/runner/work/zeroshare-multiplatform/zeroshare-multiplatform/composeApp/build/compose/binaries/main/dmg"
           elif [[ "${{ matrix.os }}" == "windows-latest" ]]; then
             binary_path="composeApp/build/compose/binaries/main/windows"
           elif [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then
-            binary_path="composeApp/build/compose/binaries/main/linux"
+            binary_path="/home/runner/work/zeroshare-multiplatform/zeroshare-multiplatform/composeApp/build/compose/binaries/main/deb"
           fi
           
           # Get the tag version
