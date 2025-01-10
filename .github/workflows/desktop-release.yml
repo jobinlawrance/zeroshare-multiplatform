@@ -36,7 +36,7 @@ jobs:
         with:
           path: |
             ~/.konan
-            key: ${{ runner.os }}-v1-${{ hashFiles('*.versions.toml') }}
+          key: ${{ runner.os }}-v1-${{ hashFiles('*.versions.toml') }}
 
       - name: Build for ${{ matrix.os }}
         run: |
