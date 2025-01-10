@@ -26,9 +26,9 @@ jobs:
           $tag = $(git describe --tags --abbrev=0 --match "*-desktop")
           $version = $tag -replace '-desktop$', ''
           $name_msi = "ZeroShare-${version}.msi"
-          $path_msi = "composeApp/build/release/main-release/msi/${name}"
+          $path_msi = "composeApp/build/compose/binaries/main/msi/${name}"
           $name_exe = "ZeroShare-${version}.exe"
-          $path_exe = "composeApp/build/release/main-release/exe/${name}"
+          $path_exe = "composeApp/build/compose/binaries/main/exe/${name}"
           "TAG=$tag" >> $env:GITHUB_ENV
           "VERSION=$version" >> $env:GITHUB_ENV
           "RELEASE_PATH_MSI=$path_msi" >> $env:GITHUB_ENV
