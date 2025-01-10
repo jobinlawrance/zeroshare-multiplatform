@@ -79,7 +79,7 @@ jobs:
           tag=$(git describe --tags --abbrev=0 --match "*-desktop")
           version=$(echo "$tag" | sed 's/-desktop$//')
           name_deb="ZeroShare-${version}.deb"
-          path_deb="desktopApp/build/compose/binaries/main/deb/${name}"
+          path_deb="composeApp/build/compose/binaries/main/deb/${name}"
           name_rpm="ZeroShare-${version}.rpm"
           path_rpm="composeApp/build/compose/binaries/main/rpm/${name}"
           echo "TAG=$tag" >> $GITHUB_ENV
@@ -90,7 +90,7 @@ jobs:
           echo "NAME_RPM=$name_rpm" >> $GITHUB_ENV
 
       - name: Create RPM & DEB
-        run: ./gradlew packageReleaseDeb packageReleaseRpm
+        run: ./gradlew packageDeb packageRpm
 
       - name: Upload RPM
         uses: actions/upload-artifact@v4
@@ -112,10 +112,56 @@ jobs:
           path: |
             **/build/compose/logs/*  
 
+
+  macos-build:
+    runs-on: macos-latest
+    outputs:
+      release_tag: ${{ steps.path_variables.outputs.tag }}
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup-gradle
+        with:
+          gradle-cache-encryption-key: ${{ secrets.GRADLE_CACHE_ENCRYPTION_KEY }}
+
+      - name: Create path variables
+        id: path_variables
+        run: |
+          tag=$(git describe --tags --abbrev=0 --match "*-desktop")
+          version=$(echo "$tag" | sed 's/-desktop$//')
+          name="ZeroShare-${version}.dmg"
+          path="composeApp/build/compose/binaries/main/dmg/${name}"
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+          echo "TAG=$tag" >> $GITHUB_ENV
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "RELEASE_PATH=$path" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=$name" >> $GITHUB_ENV
+
+      - name: Create DMG
+        run: ./gradlew packageDmg
+
+      - name: Upload reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/compose/logs/*  
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.RELEASE_PATH }}
+          retention-days: 1
+
   release-github:
-    # TODO: Restore
-    #needs: [build-linux, build-windows, build-macos]
-    needs: [windows-build, linux-build]
+    needs: [windows-build, linux-build, macos-build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
