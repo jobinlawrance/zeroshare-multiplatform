@@ -37,8 +37,8 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.time.Duration.Companion.seconds
 
-val baseUrl = "https://zeroshare.jkbx.live"
-//private val baseUrl = "http://69.69.0.5:4000"
+//val baseUrl = "https://zeroshare.jkbx.live"
+val baseUrl = "http://10.0.2.2:4000"
 
 class BackendApi : KoinComponent {
     private val settings: Settings by inject<Settings>()
@@ -197,22 +197,14 @@ class BackendApi : KoinComponent {
         url: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): HttpResponse {
-        return post(url, {
-            block()
-            header(HttpHeaders.ContentType, "application/json")
-//            header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
-        })
+        return post(url, block)
     }
 
     suspend fun HttpClient.getWithAuth(
         url: String,
         block: HttpRequestBuilder.() -> Unit = {}
     ): HttpResponse {
-        return get(url, {
-            block()
-            header(HttpHeaders.ContentType, "application/json")
-//            header(HttpHeaders.Authorization, "Bearer ${settings.getString(tokenKey, "")}")
-        })
+        return get(url, block)
     }
 }
 
@@ -245,15 +237,32 @@ fun getHttpClient(
             showCommentEvents()
             showRetryEvents()
         }
-//        TODO: Not sure why this isn't working
+        install(DefaultRequest) {
+            // Add common headers globally
+            header(HttpHeaders.Accept, "application/json")
+            header(HttpHeaders.AcceptCharset, "UTF-8")
+            header(HttpHeaders.ContentType, "application/json")
+        }
+
         install(Auth) {
             bearer {
-                sendWithoutRequest { true }
+                // Remove sendWithoutRequest or set it to specific URLs
+                sendWithoutRequest { request -> 
+                    !request.url.toString().contains("/login") && 
+                    !request.url.toString().contains("/sse")
+                }
+                
                 loadTokens {
-                    BearerTokens(
-                        accessToken = settings.getString(tokenKey, ""),
-                        refreshToken = settings.getString(refreshTokenKey, "")
-                    )
+                    val token = settings.getString(tokenKey, "")
+
+                    if (token.isBlank()) {
+                        null  // Return null if token is empty to prevent empty Authorization header
+                    } else {
+                        BearerTokens(
+                            accessToken = token,
+                            refreshToken = settings.getString(refreshTokenKey, "")
+                        )
+                    }
                 }
                 refreshTokens {
                     val refreshToken = client.post("$baseUrl/refresh") {
