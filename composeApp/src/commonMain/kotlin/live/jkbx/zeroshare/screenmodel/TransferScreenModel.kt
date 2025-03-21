@@ -9,7 +9,6 @@ import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.models.Device
 import live.jkbx.zeroshare.models.DownloadResponse
 import live.jkbx.zeroshare.network.BackendApi
-import live.jkbx.zeroshare.network.baseUrl
 import live.jkbx.zeroshare.socket.FileTransferMetadata
 import live.jkbx.zeroshare.socket.KtorServer
 import live.jkbx.zeroshare.socket.SocketStream
@@ -19,7 +18,7 @@ import org.koin.core.component.inject
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-class TransferScreenModel : ScreenModel, KoinComponent {
+class TransferScreenModel(private val baseUrl: String) : ScreenModel, KoinComponent {
     private val log by injectLogger("TransferScreenModel")
     private val backendApi by inject<BackendApi>()
 

@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -172,3 +173,12 @@ fun getVersionName(): String =
         .asText.get()
         .trim()
         .replace("-desktop", "")
+
+val backendUrl= gradleLocalProperties(rootDir, providers).getProperty("backendUrl","")
+
+tasks.withType<JavaExec> {
+    doFirst {
+        println("Running with backendUrl: $backendUrl")
+    }
+    environment("BACKEND_URL", backendUrl)
+}

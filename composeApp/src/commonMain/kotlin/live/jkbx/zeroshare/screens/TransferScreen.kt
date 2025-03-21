@@ -51,7 +51,9 @@ import live.jkbx.zeroshare.utils.toFileMetaData
 import live.jkbx.zeroshare.utils.uniqueDeviceId
 import org.jetbrains.compose.resources.imageResource
 import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import org.koin.core.component.inject
+import org.koin.core.qualifier.qualifier
 import zeroshare.composeapp.generated.resources.Res
 import zeroshare.composeapp.generated.resources.paper_plane
 
@@ -64,7 +66,7 @@ class TransferScreen : KoinComponent, Screen {
         val log by injectLogger("Transfer Screen")
         val directory: PlatformDirectory? by remember { mutableStateOf(null) }
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        val transferVM = rememberScreenModel { TransferScreenModel() }
+        val transferVM = rememberScreenModel { TransferScreenModel(get(qualifier("backendUrl"))) }
         val json by inject<Json>()
         var showDialog by remember { mutableStateOf(false) }
         var selectedOption by remember { mutableStateOf<DropdownItem?>(null) }

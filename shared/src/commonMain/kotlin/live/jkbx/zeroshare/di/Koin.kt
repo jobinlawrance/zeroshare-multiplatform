@@ -65,12 +65,12 @@ private val coreModule = module {
         ignoreUnknownKeys = true
     } }
 
-    single { BackendApi() }
+    single { BackendApi(get(qualifier("backendUrl"))) }
     single { LoginViewModel() }
     factory { GoogleAuthCredentials(get(qualifier("serverId"))) }
     single { SettingsUtil() }
     single { KtorFileTransfer() }
-    single { getHttpClient(get(), get(), baseLogger.withTag("Http-Client"), get()) }
+    single { getHttpClient(get(), get(), baseLogger.withTag("Http-Client"), get(), get(qualifier("backendUrl"))) }
 
 }
 

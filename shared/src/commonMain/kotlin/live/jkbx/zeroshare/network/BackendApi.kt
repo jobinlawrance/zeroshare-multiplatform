@@ -37,10 +37,8 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.time.Duration.Companion.seconds
 
-//val baseUrl = "https://zeroshare.jkbx.live"
-val baseUrl = "http://10.0.2.2:4000"
 
-class BackendApi : KoinComponent {
+class BackendApi(private val baseUrl: String) : KoinComponent {
     private val settings: Settings by inject<Settings>()
     private val kJson: Json by inject<Json>()
     private val log by injectLogger("BackendAPI")
@@ -214,6 +212,7 @@ fun getHttpClient(
     kJson: Json,
     log: Logger,
     settings: Settings,
+    baseUrl: String
 ): HttpClient {
 
     val client = HttpClient(engine) {

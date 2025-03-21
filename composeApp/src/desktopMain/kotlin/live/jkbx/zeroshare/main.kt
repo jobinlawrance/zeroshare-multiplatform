@@ -1,7 +1,5 @@
 package live.jkbx.zeroshare
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.mmk.kmpnotifier.extensions.composeDesktopResourcesPath
@@ -16,8 +14,8 @@ import live.jkbx.zeroshare.nebula.Nebula
 import live.jkbx.zeroshare.nebula.NebulaJVMImpl
 import live.jkbx.zeroshare.socket.KmpHashing
 import live.jkbx.zeroshare.socket.KmpHashingJVMImpl
-import org.koin.core.module.dsl.bind
-import org.koin.core.module.dsl.factoryOf
+import org.koin.core.qualifier.named
+import org.koin.core.qualifier.qualifier
 import org.koin.dsl.module
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -36,9 +34,9 @@ fun main() = application {
                 }
             }
         }
-
+        single<String>(named("backendUrl")) { System.getenv("BACKEND_URL") }
         single<KmpHashing> { KmpHashingJVMImpl() }
-        single<Nebula> { NebulaJVMImpl() }
+        single<Nebula> { NebulaJVMImpl(get(qualifier("backendUrl"))) }
     })
 
     NotifierManager.initialize(

@@ -4,20 +4,16 @@ import androidx.compose.runtime.Composable
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.get
 import com.russhwolf.settings.set
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.http.HttpHeaders
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -47,12 +43,10 @@ import retrofit2.http.Streaming
 import retrofit2.http.Url
 import rx.Observable
 import rx.schedulers.Schedulers
-import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
-import java.io.InputStreamReader
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -60,7 +54,7 @@ import java.util.zip.ZipFile
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 
-class NebulaJVMImpl : Nebula, KoinComponent {
+class NebulaJVMImpl(baseUrl: String) : Nebula, KoinComponent {
 
     private val log by injectLogger("Nebula")
     private val client by inject<HttpClient>()
@@ -76,7 +70,7 @@ class NebulaJVMImpl : Nebula, KoinComponent {
 
     private val retrofit: Retrofit = Retrofit.Builder()
         .client(okHttpClient)
-        .baseUrl("http://localhost:4000")
+        .baseUrl(baseUrl)
         .addConverterFactory(
             json.asConverterFactory("application/json; charset=UTF8".toMediaType())
         )
@@ -312,7 +306,7 @@ class NebulaJVMImpl : Nebula, KoinComponent {
                     "&& sudo launchctl unload /Library/LaunchDaemons/com.nebula.plist" +
                     "&& sudo launchctl load /Library/LaunchDaemons/com.nebula.plist" +
                     "&& sudo launchctl start com.nebula"
-                   +  "&& sudo cat /var/log/nebula.log"
+                    + "&& sudo cat /var/log/nebula.log"
         )
 
         messages(result)

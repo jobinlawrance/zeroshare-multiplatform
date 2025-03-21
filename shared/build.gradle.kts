@@ -12,6 +12,7 @@ plugins {
 }
 
 val serverId= gradleLocalProperties(rootDir, providers).getProperty("serverId","")
+val backendUrl= gradleLocalProperties(rootDir, providers).getProperty("backendUrl","")
 
 kotlin {
     // https://kotlinlang.org/docs/multiplatform-expect-actual.html#expected-and-actual-classes
@@ -123,6 +124,9 @@ android {
         resValue("string",
             "serverId",
             "\"" + serverId + "\"")
+        resValue("string",
+            "backendUrl",
+            "\"" + backendUrl + "\"")
     }
 
     buildFeatures {
