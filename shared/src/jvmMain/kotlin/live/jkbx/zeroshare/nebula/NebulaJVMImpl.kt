@@ -76,7 +76,7 @@ class NebulaJVMImpl : Nebula, KoinComponent {
 
     private val retrofit: Retrofit = Retrofit.Builder()
         .client(okHttpClient)
-        .baseUrl("https://zeroshare.jkbx.live/")
+        .baseUrl("http://localhost:4000")
         .addConverterFactory(
             json.asConverterFactory("application/json; charset=UTF8".toMediaType())
         )
@@ -216,6 +216,11 @@ class NebulaJVMImpl : Nebula, KoinComponent {
           # Port of 0 means randomly choose, usually good for clients
           # Want to set to 4242 for relays and lighthouses
           port: 0
+        punchy:
+          punch: true
+          delay: 1s
+          respond: true
+          respond_delay: 5s
 
         # Firewall settings
         firewall:
@@ -297,16 +302,17 @@ class NebulaJVMImpl : Nebula, KoinComponent {
                     "&& cp $tempDir/ca.crt /etc/zeroshare/ " +
                     "&& cp $tempDir/host.crt /etc/zeroshare/ " +
                     "&& cp $tempDir/host.key /etc/zeroshare/ " +
+                    "&& cp $tempDir/config.yml /etc/zeroshare/ " +
 //                    "&& cp $tempDir/nebula.service /etc/systemd/system/" +
                     "&& sudo cp $tempDir/com.nebula.plist /Library/LaunchDaemons/" +
-                    "&& sudo route delete 69.69.0.0/16" +
+                    "&& sudo route delete 69.69.0.0/8" +
 //                    "sudo systemctl daemon-reload" +
 //                    "sudo systemctl enable nebula.service" +
 //                    "sudo systemctl start nebula.service" +
                     "&& sudo launchctl unload /Library/LaunchDaemons/com.nebula.plist" +
                     "&& sudo launchctl load /Library/LaunchDaemons/com.nebula.plist" +
-                    "&& sudo launchctl start com.nebula" +
-                    "&& sudo cat /var/log/nebula.log"
+                    "&& sudo launchctl start com.nebula"
+                   +  "&& sudo cat /var/log/nebula.log"
         )
 
         messages(result)
