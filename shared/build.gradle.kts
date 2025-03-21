@@ -90,7 +90,7 @@ kotlin {
         }
 
         jvmMain.dependencies {
-            implementation(files("../libs/libzt-1.8.10.jar"))
+
             implementation(libs.commons.compress) // For extracting tar.gz
             implementation(libs.retrofit)
             implementation(libs.converter.kotlinx.serialization)
@@ -139,7 +139,6 @@ android {
         implementation(libs.koin.android)
         implementation(libs.koin.androidx.compose)
         implementation(libs.ktor.client.okHttp)
-        implementation(files("../libs/libzt-release.aar"))
         api(files("../libs/mobileNebula.aar"))
         implementation(libs.androidx.credentials)
         implementation(libs.androidx.credentials.play.services.auth)

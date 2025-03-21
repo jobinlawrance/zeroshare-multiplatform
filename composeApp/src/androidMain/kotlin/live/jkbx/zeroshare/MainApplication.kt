@@ -61,7 +61,6 @@ class MainApplication : Application() {
 //                CIO.create()
             }
             single<String>(named("serverId")) { getString(live.jkbx.zeroshare.shared.R.string.serverId) }
-            factoryOf(::ZeroTierPeerImpl) { bind<ZeroTierPeer>() }
             factoryOf(::NebulaAndroidImpl) { bind<Nebula>() }
             single<KmpHashing> { KmpHashingAndroidImpl() }
         })

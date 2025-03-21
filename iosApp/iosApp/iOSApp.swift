@@ -5,7 +5,6 @@ import UniformTypeIdentifiers
 
 enum NavigationPath {
     case login
-    case main
     case nebula_setup
     case transfer
 }
@@ -138,8 +137,6 @@ struct iOSApp: App {
                     switch navigationManager.currentPath {
                     case .login:
                         LoginScreen()
-                    case .main:
-                        PeerScreen()
                     case .nebula_setup:
                         NebulaSetupView(publicKey: $publicKey)
                             .onOpenURL { url in

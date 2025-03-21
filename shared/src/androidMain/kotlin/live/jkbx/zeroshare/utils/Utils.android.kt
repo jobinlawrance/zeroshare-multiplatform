@@ -1,12 +1,9 @@
 package live.jkbx.zeroshare.utils
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import com.russhwolf.settings.Settings
 import io.ktor.client.*
 import io.ktor.http.*
 import io.opentelemetry.api.OpenTelemetry
@@ -14,9 +11,8 @@ import io.opentelemetry.instrumentation.ktor.v3_0.client.KtorClientTracing
 import io.opentelemetry.sdk.autoconfigure.AutoConfiguredOpenTelemetrySdk
 import io.opentelemetry.semconv.ResourceAttributes
 import live.jkbx.zeroshare.controllers.GoogleAuthProvider
-import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
-import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
+import live.jkbx.zeroshare.viewmodels.LoginViewModel
 import android.provider.Settings as AndroidSettings
 import org.koin.java.KoinJavaComponent.inject
 
@@ -35,13 +31,13 @@ actual fun loginWithGoogle(
     onLoginError: (Throwable) -> Unit
 ) {
     val googleAuthProvider: GoogleAuthProvider by inject(GoogleAuthProvider::class.java)
-    val zeroTierViewModel by inject<ZeroTierViewModel>(ZeroTierViewModel::class.java)
+    val loginViewModel by inject<LoginViewModel>(LoginViewModel::class.java)
     val uiProvider = googleAuthProvider.getUiProvider()
 
     LaunchedEffect(Unit) {
         try {
             val googleUser = uiProvider.signIn()
-            val sseEvent = zeroTierViewModel.verifyGoogleToken(googleUser!!.idToken)
+            val sseEvent = loginViewModel.verifyGoogleToken(googleUser!!.idToken)
 
             onLoginSuccess(sseEvent)
         }  catch (e: Exception) {

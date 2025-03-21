@@ -36,7 +36,7 @@ fun main() = application {
                 }
             }
         }
-        factoryOf(::ZeroTierPeerImpl) { bind<ZeroTierPeer>() }
+
         single<KmpHashing> { KmpHashingJVMImpl() }
         single<Nebula> { NebulaJVMImpl() }
     })

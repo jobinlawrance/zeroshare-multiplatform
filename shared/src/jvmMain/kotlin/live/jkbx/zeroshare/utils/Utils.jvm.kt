@@ -2,7 +2,6 @@ package live.jkbx.zeroshare.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.get
 import io.ktor.client.*
@@ -16,7 +15,7 @@ import kotlinx.coroutines.withContext
 import live.jkbx.zeroshare.di.refreshTokenKey
 import live.jkbx.zeroshare.di.tokenKey
 import live.jkbx.zeroshare.models.SSEEvent
-import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
+import live.jkbx.zeroshare.viewmodels.LoginViewModel
 import org.koin.java.KoinJavaComponent.inject
 import java.awt.Desktop
 import java.net.InetAddress
@@ -42,14 +41,14 @@ actual fun loginWithGoogle(
     onLoginSuccess: (SSEEvent) -> Unit,
     onLoginError: (Throwable) -> Unit
 ) {
-    val zeroTierViewModel by inject<ZeroTierViewModel>(ZeroTierViewModel::class.java)
+    val loginViewModel by inject<LoginViewModel>(LoginViewModel::class.java)
     val sessionToken = UUID.randomUUID().toString()
-    val url = zeroTierViewModel.creteNetworkURL(sessionToken)
+    val url = loginViewModel.creteNetworkURL(sessionToken)
     val settings by inject<Settings>(Settings::class.java)
 
     openUrlInBrowser(url)
     LaunchedEffect(Unit) {
-        zeroTierViewModel.listenToLogin(sessionToken, { sseEvent ->
+        loginViewModel.listenToLogin(sessionToken, { sseEvent ->
             settings.putString(tokenKey, sseEvent.token)
             settings.putString(refreshTokenKey, sseEvent.refreshToken)
             onLoginSuccess(sseEvent)

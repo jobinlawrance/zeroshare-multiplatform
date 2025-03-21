@@ -10,7 +10,7 @@ import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.socket.FileSaver
 import live.jkbx.zeroshare.socket.KmpHashing
 import live.jkbx.zeroshare.utils.SettingsUtil
-import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
+import live.jkbx.zeroshare.viewmodels.LoginViewModel
 import org.koin.core.Koin
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
@@ -39,7 +39,7 @@ fun Koin.loggerWithTag(tag: String) = get<Logger>(qualifier = null) { parameters
 
 @Suppress("unused") // Called from Swift
 object KotlinDependencies : KoinComponent {
-    fun getZeroTierViewModel() = getKoin().get<ZeroTierViewModel>()
+    fun getLoginViewModel() = getKoin().get<LoginViewModel>()
     fun getBackendApi() = getKoin().get<BackendApi>()
     fun getSettingsUtil() = getKoin().get<SettingsUtil>()
     fun getFileSaver() = getKoin().get<FileSaver>()

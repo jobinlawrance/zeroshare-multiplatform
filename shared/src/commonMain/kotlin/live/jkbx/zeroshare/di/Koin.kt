@@ -4,15 +4,13 @@ import co.touchlab.kermit.Logger
 import co.touchlab.kermit.StaticConfig
 import co.touchlab.kermit.koin.KermitKoinLogger
 import co.touchlab.kermit.platformLogWriter
-import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import live.jkbx.zeroshare.models.GoogleAuthCredentials
 import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.network.getHttpClient
-import live.jkbx.zeroshare.socket.FileTransfer
 import live.jkbx.zeroshare.socket.KtorFileTransfer
 import live.jkbx.zeroshare.utils.SettingsUtil
-import live.jkbx.zeroshare.viewmodels.ZeroTierViewModel
+import live.jkbx.zeroshare.viewmodels.LoginViewModel
 import org.koin.core.KoinApplication
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -68,7 +66,7 @@ private val coreModule = module {
     } }
 
     single { BackendApi() }
-    single { ZeroTierViewModel() }
+    single { LoginViewModel() }
     factory { GoogleAuthCredentials(get(qualifier("serverId"))) }
     single { SettingsUtil() }
     single { KtorFileTransfer() }

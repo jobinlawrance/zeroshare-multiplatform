@@ -10,28 +10,11 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* iOSApp.swift */; };
-		DA47F86F2CEB63270022001A /* zt.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA47F86E2CEB63270022001A /* zt.xcframework */; };
-		DA47F8702CEB63270022001A /* zt.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = DA47F86E2CEB63270022001A /* zt.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		DA47F8732CEB633D0022001A /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = DA47F8722CEB63350022001A /* libc++.tbd */; };
 		DA47F8792CEC67DD0022001A /* Koin.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA47F8782CEC67DB0022001A /* Koin.swift */; };
 		DA82DED02CF7B3C2004FC733 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = DA82DECF2CF7B3C2004FC733 /* GoogleSignIn */; };
 		DA82DED22CF7B3C2004FC733 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = DA82DED12CF7B3C2004FC733 /* GoogleSignInSwift */; };
 		DA82DEE32CF86768004FC733 /* SwiftyJSON in Frameworks */ = {isa = PBXBuildFile; productRef = DA82DEE22CF86768004FC733 /* SwiftyJSON */; };
 /* End PBXBuildFile section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		DA47F8712CEB63270022001A /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				DA47F8702CEB63270022001A /* zt.xcframework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -55,8 +38,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DA47F8732CEB633D0022001A /* libc++.tbd in Frameworks */,
-				DA47F86F2CEB63270022001A /* zt.xcframework in Frameworks */,
 				DA82DED02CF7B3C2004FC733 /* GoogleSignIn in Frameworks */,
 				DA82DEE32CF86768004FC733 /* SwiftyJSON in Frameworks */,
 				DA82DED22CF7B3C2004FC733 /* GoogleSignInSwift in Frameworks */,
@@ -134,7 +115,6 @@
 				7555FF77242A565900829871 /* Sources */,
 				B92378962B6B1156000C7307 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
-				DA47F8712CEB63270022001A /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

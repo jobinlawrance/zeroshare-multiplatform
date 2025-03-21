@@ -9,7 +9,6 @@
 import SwiftUI
 import Shared
 import GoogleSignIn
-import zt
 
 struct LoginScreen: View {
     
@@ -47,7 +46,7 @@ struct LoginScreen: View {
                 // Google Login Button
                 Button(action: {
                     buttonDisabled = true
-                    let zeroTierViewModel = KotlinDependencies().getZeroTierViewModel()
+                    let loginViewModel = KotlinDependencies().getLoginViewModel()
                     let keyWindow = UIApplication.shared.connectedScenes
                             .filter({$0.activationState == .foregroundActive})
                             .compactMap({$0 as? UIWindowScene})
@@ -71,7 +70,7 @@ struct LoginScreen: View {
                                     // Send ID token to backend (example below).
                                     
                                     Task {
-                                        let result = try await zeroTierViewModel.verifyGoogleToken(token: idToken!.tokenString)
+                                        let result = try await loginViewModel.verifyGoogleToken(token: idToken!.tokenString)
                                         let backendApi = KotlinDependencies().getBackendApi()
                                         let deviceResult = try await backendApi.setDeviceDetails(machineName: Utils_nativeKt.getMachineName(), platformName: Utils_nativeKt.getPlatform().name, deviceId: Utils_nativeKt.uniqueDeviceId())
                                         if (deviceResult.boolValue) {
@@ -117,13 +116,13 @@ struct LoginScreen: View {
                 Spacer()
                 
                 HStack {
-                    Image("zerotier") // Replace with your asset name
+                    Image("nebula") // Replace with your asset name
                         .resizable()
                         .frame(width: 24, height: 24)
                     
                     Spacer().frame(width: 8)
                     
-                    Text("Powered by ZeroTier")
+                    Text("Powered by Nebula")
                         .font(.system(size: 14))
                         .foregroundColor(.white)
                 }
@@ -154,96 +153,4 @@ extension Color {
         
         self.init(red: r, green: g, blue: b, opacity: a)
     }
-}
-
-enum ZeroTierError: Error {
-    case nodeStartFailure
-    case nodeOffline
-    case networkJoinFailure
-    case networkTimeout
-}
-
-var isConnected = false
-
-func eventHandler(msgPtr: UnsafeMutableRawPointer?) {
-    guard let msg = msgPtr?.bindMemory(to: zts_event_msg_t.self, capacity: 1) else { return }
-    let eventCode = zts_event_t(rawValue: UInt32(msg.pointee.event_code))
-    
-    if eventCode == ZTS_EVENT_ADDR_ADDED_IP4 {
-        // Mark connection as successful
-        isConnected = true
-    }
-}
-
-func connectToZTNetwork(_ networkId: String, onNodeCreated: (_ nodeId: String) -> Void) async throws -> String {
-    
-    lazy var log = koin.loggerWithTag(tag: "ZeroTier")
-    // Convert network ID from string to UInt64
-    guard let nwid = UInt64(networkId.replacingOccurrences(of: ":", with: ""), radix: 16) else {
-        throw ZeroTierError.networkJoinFailure
-    }
-
-     // This can be a global variable to track the connection status
-    
-
-    
-    // Set up event handler
-    zts_init_set_event_handler(eventHandler)  // Pass the C-style function pointer
-
-    var storagePath: String
-
-    if let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-        // Create a ZeroTier subdirectory
-        let ztPath = documentsPath.appendingPathComponent("zerotier")
-        
-        // Create directory if it doesn't exist
-        try? FileManager.default.createDirectory(at: ztPath,
-                                                 withIntermediateDirectories: true,
-                                                 attributes: nil)
-        
-        storagePath = ztPath.path
-    } else {
-        // Fallback to temporary directory if documents directory is not available
-        log.w(message: {"Falling back to temporary directory"})
-        storagePath = NSTemporaryDirectory().appending("zerotier")
-    }
-    
-    // Initialize and start node
-    zts_init_set_port(9993)
-    zts_init_from_storage(storagePath)
-    let startResult = zts_node_start()
-    if startResult != 0 {
-        throw ZeroTierError.nodeStartFailure
-    }
-    
-    // Wait for node to come online
-    var waitTime = 0
-    while zts_node_is_online() != 1 {
-        if waitTime >= 30 {
-            throw ZeroTierError.nodeOffline
-        }
-        try await Task.sleep(nanoseconds: 1 * 1_000_000_000) // Wait 1 second asynchronously
-        waitTime += 1
-    }
-    
-    onNodeCreated(String(format: "%llX", zts_node_get_id()))
-    
-    // Join network
-    let joinResult = zts_net_join(nwid)
-    if joinResult != 0 {
-        throw ZeroTierError.networkJoinFailure
-    }
-    
-    // Wait for successful network connection
-    waitTime = 0
-    while !isConnected {
-        if waitTime >= 30 {
-            throw ZeroTierError.networkTimeout
-        }
-        try await Task.sleep(nanoseconds: 1 * 1_000_000_000) // Wait 1 second asynchronously
-        waitTime += 1
-    }
-    
-    // Return the node ID as a hexadecimal string
-    return String(format: "%llX", zts_node_get_id())
 }

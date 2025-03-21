@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,25 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.get
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import live.jkbx.zeroshare.connectToNetwork
-import live.jkbx.zeroshare.controllers.GoogleAuthProvider
 import live.jkbx.zeroshare.di.injectLogger
 import live.jkbx.zeroshare.di.nebulaSetupKey
 import live.jkbx.zeroshare.di.tokenKey
-import live.jkbx.zeroshare.nebula.IncomingSite
-import live.jkbx.zeroshare.nebula.Nebula
 import live.jkbx.zeroshare.network.BackendApi
 import live.jkbx.zeroshare.utils.getMachineName
 import live.jkbx.zeroshare.utils.getPlatform
@@ -53,9 +45,9 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import zeroshare.composeapp.generated.resources.Res
+import zeroshare.composeapp.generated.resources.nebula
 import zeroshare.composeapp.generated.resources.neural
 import zeroshare.composeapp.generated.resources.search
-import zeroshare.composeapp.generated.resources.zerotier
 
 
 class LoginScreen : Screen, KoinComponent {
@@ -142,7 +134,11 @@ class LoginScreen : Screen, KoinComponent {
                         login.value = true
                     }
                 ) {
-                    Image(painterResource(Res.drawable.search), modifier = Modifier.size(24.dp), contentDescription = "Google Login")
+                    Image(
+                        painterResource(Res.drawable.search),
+                        modifier = Modifier.size(24.dp),
+                        contentDescription = "Google Login"
+                    )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(text = "Login with Google")
                 }
@@ -166,13 +162,13 @@ class LoginScreen : Screen, KoinComponent {
                     .padding(bottom = 16.dp)
             ) {
                 Image(
-                    painter = painterResource(Res.drawable.zerotier), // Replace with your ZeroTier image resource
-                    contentDescription = "ZeroTier Logo",
+                    painter = painterResource(Res.drawable.nebula), // Replace with your ZeroTier image resource
+                    contentDescription = "Nebula Logo",
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Powered by ZeroTier",
+                    text = "Powered by Nebula",
                     fontSize = 14.sp,
                     color = Color.White,
                     textAlign = TextAlign.Center
