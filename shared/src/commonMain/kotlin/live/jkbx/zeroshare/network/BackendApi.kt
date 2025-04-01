@@ -59,7 +59,6 @@ class BackendApi(private val baseUrl: String) : KoinComponent {
                         val sseEvent = parseSseToken(event.data ?: "")
                         settings.putString(tokenKey, sseEvent.token)
                         settings.putString(refreshTokenKey, sseEvent.refreshToken)
-                        settings.putString(networkIdKey, sseEvent.networkId)
                         onReceived(sseEvent)
                     }
                 }
@@ -157,7 +156,6 @@ class BackendApi(private val baseUrl: String) : KoinComponent {
         val sseEvent = req.body<SSEEvent>()
         settings.putString(tokenKey, sseEvent.token)
         settings.putString(refreshTokenKey, sseEvent.refreshToken)
-        settings.putString(networkIdKey, sseEvent.networkId)
         return sseEvent
     }
 

@@ -1,21 +1,17 @@
 package live.jkbx.zeroshare.screenmodel
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-
 import live.jkbx.zeroshare.nebula.IncomingSite
 import live.jkbx.zeroshare.nebula.Key
 import live.jkbx.zeroshare.nebula.Nebula
@@ -47,7 +43,8 @@ class NebulaScreenModel(
         log.d { "Init Model" }
         globalScope.launch {
             if (!isActive) return@launch
-            kp = nebula.generateKeyPair(messages = { messages.update { msg -> msg + it } },
+            kp = nebula.generateKeyPair(
+                messages = { messages.update { msg -> msg + it } },
                 downloadProgress = {
                     downloadMessage.value = "Download Progress - $it %"
                     if (it == 100) {
@@ -64,7 +61,7 @@ class NebulaScreenModel(
     fun signAndInstall() {
         globalScope.launch {
             messages.update { msg -> msg + "Signing the public key" }
-            val cert = nebula.signCertificate(kp.publicKey)
+            val cert = backendApi.signPublicKey(kp.publicKey, uniqueDeviceId())
             messages.update { msg -> msg + "Signed the keys successfully" }
             nebula.parseCert(cert.caCert)
             nebula.verifyCertAndKey(cert.signedKey, kp.privateKey)

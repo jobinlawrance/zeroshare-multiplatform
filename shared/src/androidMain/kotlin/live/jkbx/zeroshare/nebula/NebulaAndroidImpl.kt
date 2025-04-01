@@ -17,7 +17,6 @@ import java.io.File
 
 class NebulaAndroidImpl : Nebula, KoinComponent {
     private val json by inject<Json>()
-    private val backendApi by inject<BackendApi> ()
 
     override suspend fun generateKeyPair(messages: (String) -> Unit, downloadProgress: (Int) -> Unit): Key {
         val kp = mobileNebula.MobileNebula.generateKeyPair()
@@ -73,9 +72,7 @@ class NebulaAndroidImpl : Nebula, KoinComponent {
         return Result.success(siteDir)
     }
 
-    override suspend fun signCertificate(publicKey: String): SignedKeyResponse {
-        return backendApi.signPublicKey(publicKey, uniqueDeviceId())
-    }
+
 
     private fun validateOrDeleteSite(siteDir: File, context: Context): Boolean {
         try {
