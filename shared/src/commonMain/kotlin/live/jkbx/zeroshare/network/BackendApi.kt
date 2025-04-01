@@ -244,11 +244,12 @@ fun getHttpClient(
         install(Auth) {
             bearer {
                 // Remove sendWithoutRequest or set it to specific URLs
-                sendWithoutRequest { request -> 
-                    !request.url.toString().contains("/login") && 
-                    !request.url.toString().contains("/sse")
+                sendWithoutRequest { request ->
+                    !request.url.toString().contains("/login")
+                            && !request.url.toString().contains("/sse")
+                            && !request.url.toString().contains("slackhq/nebula/releases/")
                 }
-                
+
                 loadTokens {
                     val token = settings.getString(tokenKey, "")
 

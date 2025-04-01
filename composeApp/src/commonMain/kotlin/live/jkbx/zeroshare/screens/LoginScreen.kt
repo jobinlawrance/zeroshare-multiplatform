@@ -67,7 +67,8 @@ class LoginScreen : Screen, KoinComponent {
         LaunchedEffect(Unit) {
             if (settings.getString(tokenKey, "").isNotEmpty()) {
                 if (settings.getBoolean(nebulaSetupKey, false)) {
-                    navigator.replace(TransferScreen())
+ //                    navigator.replace(TransferScreen())
+                    navigator.replace(NebulaScreen())
                 } else {
                     navigator.replace(NebulaScreen())
                 }
