@@ -19,6 +19,19 @@ jobs:
         with:
           gradle-cache-encryption-key: ${{ secrets.GRADLE_CACHE_ENCRYPTION_KEY }}
 
+      - name: Create local.properties
+        shell: pwsh
+        env:
+          SERVER_ID: ${{ secrets.SERVER_ID }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          SDK_DIR: ${{ runner.temp }}\android-sdk
+        run: |
+          @"
+          sdk.dir=$env:SDK_DIR
+          serverId=$env:SERVER_ID
+          backendUrl=$env:BACKEND_URL
+          "@ | Out-File -FilePath local.properties -Encoding UTF8
+
       - name: Create path variables
         id: path_variables
         shell: pwsh
@@ -72,6 +85,19 @@ jobs:
         uses: ./.github/actions/setup-gradle
         with:
           gradle-cache-encryption-key: ${{ secrets.GRADLE_CACHE_ENCRYPTION_KEY }}
+
+      - name: Create local.properties
+        shell: bash
+        env:
+          SERVER_ID: ${{ secrets.SERVER_ID }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          SDK_DIR: ${{ runner.temp }}/android-sdk
+        run: |
+          cat << EOF > local.properties
+          sdk.dir=$SDK_DIR
+          serverId=$SERVER_ID
+          backendUrl=$BACKEND_URL
+          EOF
 
       - name: Create path variables
         id: path_variables
@@ -128,6 +154,19 @@ jobs:
         uses: ./.github/actions/setup-gradle
         with:
           gradle-cache-encryption-key: ${{ secrets.GRADLE_CACHE_ENCRYPTION_KEY }}
+      
+      - name: Create local.properties
+        shell: bash
+        env:
+          SERVER_ID: ${{ secrets.SERVER_ID }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          SDK_DIR: ${{ runner.temp }}/android-sdk
+        run: |
+          cat << EOF > local.properties
+          sdk.dir=$SDK_DIR
+          serverId=$SERVER_ID
+          backendUrl=$BACKEND_URL
+          EOF
 
       - name: Create path variables
         id: path_variables
