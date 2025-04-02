@@ -49,22 +49,31 @@ class BackendApi(private val baseUrl: String) : KoinComponent {
         return "$baseUrl/login/$sessionToken"
     }
 
-    suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit) {
+    suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit, onError: (Throwable) -> Unit) {
 
-        runCatching {
+        try {
             client.sse("$baseUrl/sse/$token") {
-                while (true) {
+                try {
                     incoming.collect { event ->
-                        log.d { "Event from server:" }
+                        log.d { "Event from server: ${event.event}" }
+                        if (event.event == "complete") {
+                            log.d { "Authentication completed" }
+                            return@collect  // Exit the collection scope
+                        }
                         val sseEvent = parseSseToken(event.data ?: "")
                         settings.putString(tokenKey, sseEvent.token)
                         settings.putString(refreshTokenKey, sseEvent.refreshToken)
                         onReceived(sseEvent)
                     }
+                } catch (e: Exception) {
+                    log.d { "Closing client" }
+                    onError(e)
                 }
             }
+        } catch(e: Exception) {
+            log.e(e) { "Error listening to login" }
+            onError(e)
         }
-        client.close()
     }
 
     suspend fun signPublicKey(publicKey: String, deviceId: String): SignedKeyResponse {

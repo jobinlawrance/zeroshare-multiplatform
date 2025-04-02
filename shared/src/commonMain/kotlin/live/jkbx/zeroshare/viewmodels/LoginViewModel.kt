@@ -11,8 +11,8 @@ class LoginViewModel : ViewModel(), KoinComponent {
 
     fun creteNetworkURL(sessionToken: String) = backendApi.creteNetworkURL(sessionToken)
 
-    suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit) {
-        backendApi.listenToLogin(token, onReceived)
+    suspend fun listenToLogin(token: String, onReceived: (sseEvent: SSEEvent) -> Unit, onError: (Throwable) -> Unit) {
+        backendApi.listenToLogin(token, onReceived, onError)
     }
 
     suspend fun verifyGoogleToken(token: String): SSEEvent {

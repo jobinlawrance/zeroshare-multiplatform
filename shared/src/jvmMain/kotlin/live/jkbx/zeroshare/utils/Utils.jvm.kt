@@ -48,15 +48,19 @@ actual fun loginWithGoogle(
 
     openUrlInBrowser(url)
     LaunchedEffect(Unit) {
-        loginViewModel.listenToLogin(sessionToken, { sseEvent ->
-            settings.putString(tokenKey, sseEvent.token)
-            settings.putString(refreshTokenKey, sseEvent.refreshToken)
-            onLoginSuccess(sseEvent)
-        })
+        loginViewModel.listenToLogin(
+            token = sessionToken,
+            onReceived = { sseEvent ->
+                settings.putString(tokenKey, sseEvent.token)
+                settings.putString(refreshTokenKey, sseEvent.refreshToken)
+                onLoginSuccess(sseEvent)
+            },
+            onError = onLoginError
+        )
     }
 }
 
-class JVMPlatform: Platform {
+class JVMPlatform : Platform {
     override val name: String = "Java ${System.getProperty("java.version")}"
 }
 
