@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import java.util.prefs.Preferences
 
 fun main() = application {
+
     initKoin(module {
         single<Settings> { PreferencesSettings(Preferences.userRoot()) }
         single<HttpClientEngine> {
@@ -34,7 +35,10 @@ fun main() = application {
                 }
             }
         }
-        single<String>(named("backendUrl")) { System.getenv("BACKEND_URL") }
+
+        single<String>(named("backendUrl")) {
+            System.getenv("BACKEND_URL") ?: "https://backend.jkbx.live"
+        }
         single<KmpHashing> { KmpHashingJVMImpl() }
         single<Nebula> { NebulaJVMImpl(get(qualifier("backendUrl"))) }
     })

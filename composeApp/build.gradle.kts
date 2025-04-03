@@ -1,5 +1,6 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.createProjectEnvironment
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -122,6 +123,8 @@ dependencies {
     implementation(libs.ktor.client.okHttp)
 }
 
+val backendUrl= gradleLocalProperties(rootDir, providers).getProperty("backendUrl","")
+
 compose.desktop {
     application {
         mainClass = "live.jkbx.zeroshare.MainKt"
@@ -173,8 +176,6 @@ fun getVersionName(): String =
         .asText.get()
         .trim()
         .replace("-desktop", "")
-
-val backendUrl= gradleLocalProperties(rootDir, providers).getProperty("backendUrl","")
 
 tasks.withType<JavaExec> {
     doFirst {
