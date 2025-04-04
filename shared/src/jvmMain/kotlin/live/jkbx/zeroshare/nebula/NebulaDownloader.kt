@@ -63,10 +63,11 @@ abstract class NebulaDownloader(baseUrl: String) : KoinComponent {
     companion object {
         fun getDownloader(baseUrl: String): NebulaDownloader {
             val osName: String = detectOS()
+            println("OS is $osName")
             return when {
                 osName.contains("mac") || osName.contains("darwin") -> NebulaDownloaderDarwin(baseUrl)
                 osName.contains("win") -> NebulaDownloaderWindows(baseUrl)
-                osName.contains("nix") || osName.contains("nux") -> NebulaDownloaderWindows(baseUrl)
+                osName.contains("nix") || osName.contains("nux") -> NebulaDownloaderLinux(baseUrl)
                 else -> throw UnsupportedOperationException("Unsupported OS: $osName")
             }
         }
