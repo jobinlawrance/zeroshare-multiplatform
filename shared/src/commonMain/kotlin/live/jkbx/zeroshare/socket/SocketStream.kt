@@ -20,10 +20,17 @@ import live.jkbx.zeroshare.utils.toDownloadResponse
 import live.jkbx.zeroshare.utils.toFileMetaData
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.koin.core.qualifier.Qualifier
+import org.koin.core.qualifier.qualifier
 
 class SocketStream: KoinComponent {
     //    private val rpcClient = SocketClient("ws://69.69.0.5:4000/stream")
-    private val rpcClient = SocketClient("wss://zeroshare.jkbx.live/stream")
+    private val backendUrl by inject<String>(qualifier = qualifier("backendUrl"))
+    private val wssUrl = if (backendUrl.startsWith("https"))
+        backendUrl.replace("https", "wss")
+    else
+        backendUrl.replace("http", "ws")
+    private val rpcClient = SocketClient("$wssUrl/stream")
     private val requestChannel = Channel<SSERequest>(Channel.UNLIMITED)
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val json by inject<Json>()
